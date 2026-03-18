@@ -1,6 +1,7 @@
 {
     "java.project.referencedLibraries": [
         "lib/**/*.jar",
-        "/home/ubuntu/Deskargak/weka-3-8-6/weka.jar"
+        "/home/ubuntu/Deskargak/weka-3-8-6/weka.jar",
+        "/home/ubuntu/Downloads/weka-3-8-6-azul-zulu-linux/weka-3-8-6/weka.jar"
     ]
 }
