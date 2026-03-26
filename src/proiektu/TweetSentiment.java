@@ -37,6 +37,22 @@ public class TweetSentiment {
             // Orain: Topic(0) Sentiment(1) TweetText(2)
             dataFiltratuta.setClassIndex(1);
 
+            // --- FASE 1: Análisis del Dataset ---
+            System.out.println("\n========== FASE 1: ANÁLISIS DEL DATASET ==========");
+            System.out.println("Numero de instancias (Training): " + dataFiltratuta.numInstances());
+            System.out.println("Numero de atributos: " + dataFiltratuta.numAttributes());
+            System.out.println("Atributos:");
+            for (int i = 0; i < dataFiltratuta.numAttributes(); i++) {
+                System.out.println("  " + i + ". " + dataFiltratuta.attribute(i).name() + 
+                                   " (Tipo: " + weka.core.Attribute.typeToString(dataFiltratuta.attribute(i)) + ")");
+            }
+            System.out.println("\nDistribucion de clases (Sentiment):");
+            int[] classCounts = dataFiltratuta.attributeStats(dataFiltratuta.classIndex()).nominalCounts;
+            for (int i = 0; i < dataFiltratuta.numClasses(); i++) {
+                System.out.println("  Clase " + dataFiltratuta.classAttribute().value(i) + ": " + classCounts[i] + " instancias");
+            }
+            System.out.println("==================================================\n");
+
             // ── 3. StringToWordVector ─────────────────────────────────────────
             StringToWordVector STWV = new StringToWordVector();
             STWV.setAttributeIndices("last");
