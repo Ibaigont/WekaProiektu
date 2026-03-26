@@ -15,6 +15,7 @@ import weka.core.Utils;
 import weka.core.converters.CSVLoader;
 import weka.filters.unsupervised.attribute.Remove;
 import weka.filters.unsupervised.attribute.StringToWordVector;
+import weka.filters.supervised.instance.ClassBalancer;
 
 public class TweetSentiment {
 
@@ -22,10 +23,11 @@ public class TweetSentiment {
         // --- Experimentatzeko balioak ---
         boolean stemmerErabili = true;
         boolean stopWordsErabili = true;
-        boolean bigramakErabili = false;
-        int hiztegiTamaina = 1000;
-        boolean atributuakOptimizatu = true;
-        int azkenAtributuKopurua = 300;
+        boolean bigramakErabili = true;
+        int hiztegiTamaina = 3000;
+        boolean atributuakOptimizatu = false; // Desactivado para soportar pesos de ClassBalancer
+        int azkenAtributuKopurua = 1500;
+        boolean klaseakOrekatu = true;
         // --------------------------------------------------
 
         String csvPath = "data/tweetSentiment.train.csv";
@@ -49,13 +51,17 @@ public class TweetSentiment {
         try {
             System.setOut(new PrintStream(new FileOutputStream(logPath)));
             jatorrizkoKontsola.println("\n[+] Weka pipeline-a exekutatzen...");
-            jatorrizkoKontsola.println("[+] Mesedez, itxaron segundo batzuk STWV-k hiztegia sortu eta SVM Cross-Validation bidez optimizatzen den bitartean...");
-            jatorrizkoKontsola.println("[+] KONTUZ: Kontsola isilik egongo da, analisi GUZTIAK zuzenean gordetzen ari direlako hemen: " + logPath + "\n");
+            jatorrizkoKontsola.println(
+                    "[+] Mesedez, itxaron segundo batzuk STWV-k hiztegia sortu eta SVM Cross-Validation bidez optimizatzen den bitartean...");
+            jatorrizkoKontsola.println(
+                    "[+] KONTUZ: Kontsola isilik egongo da, analisi GUZTIAK zuzenean gordetzen ari direlako hemen: "
+                            + logPath + "\n");
 
             // ── 1. TRAINING DATA kargatu ──────────────────────────────────────
             File cleanTrain = CSVPreprocessor.preprocessCSV(csvPath, true);
             CSVLoader loader = new CSVLoader();
-            loader.setStringAttributes("5"); // OSO GARRANTZITSUA: Tweetak String gisa irakurtzera behartzen du, ez Nominal gisa
+            loader.setStringAttributes("5"); // OSO GARRANTZITSUA: Tweetak String gisa irakurtzera behartzen du, ez
+                                             // Nominal gisa
             loader.setSource(cleanTrain);
             Instances data = loader.getDataSet();
 
@@ -66,7 +72,15 @@ public class TweetSentiment {
             Instances dataFiltratuta = Filter.useFilter(data, removeFilter);
             // Orain: Topic(0) Sentiment(1) TweetText(2)
             dataFiltratuta.setClassIndex(1);
-            dataFiltratuta.deleteWithMissingClass(); // Galdutako klasea duten instantziak garbitu InfoGain-en kraskadurak saihesteko
+            dataFiltratuta.deleteWithMissingClass(); // Galdutako klasea duten instantziak garbitu InfoGain-en
+                                                     // kraskadurak saihesteko
+
+            if (klaseakOrekatu) {
+                // ClassBalancer emplea pesos matemáticos, por lo que no duplica datos ni causa overfitting
+                ClassBalancer balancer = new ClassBalancer();
+                balancer.setInputFormat(dataFiltratuta);
+                dataFiltratuta = Filter.useFilter(dataFiltratuta, balancer);
+            }
 
             // --- 1. FASEA: Datu-sortaren analisia ---
             System.out.println("\n========== 1. FASEA: DATU-SORTAREN ANALISIA ==========");
@@ -124,7 +138,7 @@ public class TweetSentiment {
                 attrSel.setSearch(ranker);
                 attrSel.setInputFormat(dataBektorea);
                 dataBektorea = Filter.useFilter(dataBektorea, attrSel);
-                
+
                 System.out.println("\n========== 4. FASEA: ATRIBUTUEN HAUTAKETA ==========");
                 System.out.println("InfoGain ondoren hautatutako atributuak: " + dataBektorea.numAttributes());
                 System.out.println("====================================================\n");
@@ -132,20 +146,21 @@ public class TweetSentiment {
 
             // ── 5, 6 eta 7. 10-fold cross-validation (C-ren doikuntza eta Ebaluazioa) ────
             System.out.println("\n========== 5 & 6. FASEAK: SVM-REN EBALUAZIOA ETA DOIKUNTZA ==========");
-            double[] cBalioak = {0.1, 1.0, 5.0};
+            double[] cBalioak = { 0.1, 0.5, 1.0, 2.0, 5.0 };
             double cOnena = 1.0;
             double accuracyOnena = -1.0;
-            
+
             for (double c : cBalioak) {
                 SMO smoTemp = new SMO();
                 smoTemp.setC(c);
                 Evaluation evalTemp = new Evaluation(dataBektorea);
                 evalTemp.crossValidateModel(smoTemp, dataBektorea, 10, new Random(1));
-                
+
                 double accuracy = evalTemp.pctCorrect();
                 double fMeasure = evalTemp.weightedFMeasure();
-                System.out.println("-> SMO (C=" + c + ") | Accuracy: " + String.format("%.2f%%", accuracy) + " | Weighted F-Measure: " + String.format("%.4f", fMeasure));
-                
+                System.out.println("-> SMO (C=" + c + ") | Accuracy: " + String.format("%.2f%%", accuracy)
+                        + " | Weighted F-Measure: " + String.format("%.4f", fMeasure));
+
                 if (accuracy > accuracyOnena) {
                     accuracyOnena = accuracy;
                     cOnena = c;
@@ -167,7 +182,8 @@ public class TweetSentiment {
             smo.buildClassifier(dataBektorea);
 
             // ── 6. TEST DATA kargatu ──────────────────────────────────────────
-            File cleanTest = CSVPreprocessor.preprocessCSV(csvTestPath, false); // false errenkada itsuak ustekabean ez ezabatzeko
+            File cleanTest = CSVPreprocessor.preprocessCSV(csvTestPath, false); // false errenkada itsuak ustekabean ez
+                                                                                // ezabatzeko
             CSVLoader testLoader = new CSVLoader();
             testLoader.setStringAttributes("5"); // Testeko tweetak String gisa irakurtzera behartzen du
             testLoader.setSource(cleanTest);
@@ -177,20 +193,28 @@ public class TweetSentiment {
             Instances testEgitura = new Instances(dataFiltratuta, 0);
             for (int i = 0; i < testData.numInstances(); i++) {
                 double[] vals = new double[dataFiltratuta.numAttributes()];
-                
+
                 // 1. Topic (en testData es la columna 0)
                 String topicVal = testData.instance(i).stringValue(0);
                 vals[0] = dataFiltratuta.attribute(0).indexOfValue(topicVal);
                 if (vals[0] < 0)
                     vals[0] = Utils.missingValue();
-                
-                // 2. Sentiment (en testData es la 1, pero es Ciego)
-                vals[1] = Utils.missingValue();
-                
+
+                // 2. Sentiment (en testData es la 1)
+                if (testData.instance(i).isMissing(1)) {
+                    vals[1] = Utils.missingValue();
+                } else {
+                    String sentimentVal = testData.instance(i).stringValue(1);
+                    vals[1] = dataFiltratuta.attribute(1).indexOfValue(sentimentVal);
+                    if (vals[1] < 0) {
+                        vals[1] = Utils.missingValue();
+                    }
+                }
+
                 // 3. TweetText (en testData es la 4, ya que no hemos aplicado removeFilter)
                 String textVal = testData.instance(i).stringValue(4);
                 vals[2] = testEgitura.attribute(2).addStringValue(textVal);
-                
+
                 testEgitura.add(new DenseInstance(1.0, vals));
             }
             testEgitura.setClassIndex(1);
@@ -201,7 +225,16 @@ public class TweetSentiment {
                 testBektorea = Filter.useFilter(testBektorea, attrSel);
             }
 
-            // ── 7. Iragarpenak idatzi ─────────────────────────────────────────
+            // ── 7. TEST DATA ebaluatu (Matrizea inprimatzeko) ─────────────────
+            System.out.println("\n========== 7. FASEA: TEST DATUEN EBALUAZIOA ==========");
+            Evaluation evalTest = new Evaluation(dataBektorea);
+            evalTest.evaluateModel(smo, testBektorea);
+            System.out.println(evalTest.toSummaryString("Test Emaitz globalak", false));
+            System.out.println(evalTest.toClassDetailsString("Test Klaseko xehetasunak"));
+            System.out.println(evalTest.toMatrixString("Test Matrizea"));
+            System.out.println("========================================================\n");
+
+            // ── 8. Iragarpenak idatzi ─────────────────────────────────────────
             try (FileWriter f = new FileWriter(outputPath)) {
                 for (int i = 0; i < testBektorea.numInstances(); i++) {
                     double pred = smo.classifyInstance(testBektorea.instance(i));
@@ -210,7 +243,7 @@ public class TweetSentiment {
                 }
             }
             System.out.println("Iragarpenak idatzita: " + outputPath);
-            
+
             // Jatorrizko kontsola leheneratu prozesua amaitzean
             System.out.flush();
             System.setOut(jatorrizkoKontsola);
