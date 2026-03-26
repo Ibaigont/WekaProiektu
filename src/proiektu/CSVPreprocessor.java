@@ -13,7 +13,7 @@ public class CSVPreprocessor {
      * - 5 zutabe ez dituzten errenkadak baztertu
      * Fitxategi garbi berri bat itzultzen du.
      */
-    public static File preprocessCSV(String path) throws Exception {
+    public static File preprocessCSV(String path, boolean filterInvalidClasses) throws Exception {
         StringBuilder content = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
             int c;
@@ -69,6 +69,19 @@ public class CSVPreprocessor {
         File tmp = File.createTempFile("tweets_clean", ".csv");
         tmp.deleteOnExit();
         int good = 0, bad = 0;
+        // --- AURREKO PAUSOA: Klase sendoak dinamikoki detektatu ---
+        // Hiztegi bat sortzen dugu sentimendu bakoitza zenbat aldiz errepikatzen den kontatzeko
+        java.util.Map<String, Integer> classFrequencies = new java.util.HashMap<>();
+        if (filterInvalidClasses) {
+            for (int r = 1; r < rows.size(); r++) { // Goiburua saihesten dugu (r=0)
+                String[] row = rows.get(r);
+                if (row.length > 1 && row[1] != null) {
+                    String sentiment = row[1].trim(); // Jatorrizko letra larriak mantentzen ditugu
+                    classFrequencies.put(sentiment, classFrequencies.getOrDefault(sentiment, 0) + 1);
+                }
+            }
+        }
+
         try (PrintWriter pw = new PrintWriter(new FileWriter(tmp))) {
             for (int r = 0; r < rows.size(); r++) {
                 String[] row = rows.get(r);
@@ -77,10 +90,26 @@ public class CSVPreprocessor {
                     continue;
                 }
                 boolean valid = true;
-                for (String val : row) {
-                    if (val == null) { valid = false; break; }
+                for (int cIdx = 0; cIdx < row.length; cIdx++) {
+                    if (row[cIdx] == null) { valid = false; break; }
+                    // Twitterreko zarata garbitu
+                    row[cIdx] = row[cIdx].replaceAll("(?i)https?://\\S+\\s?", "")
+                                         .replaceAll("(?i)@\\w+\\s?", "")
+                                         .replaceAll("(?i)\\bRT\\b\\s*", "")
+                                         .trim();
                 }
                 if (!valid) { bad++; continue; }
+
+                // --- KLASE FANTASMEN IRAGAZKI DINAMIKOA ---
+                // Datu-sorta Training bada, fitxategi osoan 5 agerpen baino gutxiago dituzten klaseen errenkadak baztertzen ditugu
+                if (filterInvalidClasses) {
+                    String originalSentiment = row[1];
+                    if (classFrequencies.getOrDefault(originalSentiment, 0) < 5) {
+                        bad++;
+                        continue;
+                    }
+                }
+
                 pw.println(toCsvLine(row));
                 good++;
             }

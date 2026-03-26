@@ -1,0 +1,58 @@
+data/tweetSentiment.train.csv: 1628 onak, 3 baztertuak
+
+========== 1. FASEA: DATU-SORTAREN ANALISIA ==========
+Instantzia kopurua (Training): 1628
+Atributu kopurua: 3
+Atributuak:
+  0. Topic (Mota: nominal)
+  1. Sentiment (Mota: nominal)
+  2. TweetText (Mota: string)
+
+Klaseen banaketa (Sentiment):
+  Klasea negative: 168 instantzia
+  Klasea positive: 181 instantzia
+  Klasea neutral: 728 instantzia
+  Klasea irrelevant: 551 instantzia
+==================================================
+
+
+========== 4. FASEA: ATRIBUTUEN HAUTAKETA ==========
+InfoGain ondoren hautatutako atributuak: 301
+====================================================
+
+
+========== 5 & 6. FASEAK: SVM-REN EBALUAZIOA ETA DOIKUNTZA ==========
+-> SMO (C=0.1) | Accuracy: 63,33% | Weighted F-Measure: 0,5711
+-> SMO (C=1.0) | Accuracy: 72,05% | Weighted F-Measure: 0,7098
+-> SMO (C=5.0) | Accuracy: 70,88% | Weighted F-Measure: 0,7021
+
+*** Aurkitutako C parametro onena: 1.0 ***
+============================================================
+
+Emaitz globalak (Eredu optimoa C=1.0)
+Correctly Classified Instances        1173               72.0516 %
+Incorrectly Classified Instances       455               27.9484 %
+Kappa statistic                          0.5498
+Mean absolute error                      0.2843
+Root mean squared error                  0.362 
+Relative absolute error                 85.8126 %
+Root relative squared error             88.9615 %
+Total Number of Instances             1628     
+
+Klaseko xehetasunak
+                 TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
+                 0,375    0,023    0,649      0,375    0,475      0,452    0,822     0,415     negative
+                 0,398    0,021    0,699      0,398    0,507      0,486    0,782     0,418     positive
+                 0,916    0,409    0,644      0,916    0,757      0,524    0,752     0,628     neutral
+                 0,673    0,020    0,944      0,673    0,786      0,722    0,890     0,796     irrelevant
+Weighted Avg.    0,721    0,195    0,752      0,721    0,710      0,579    0,809     0,640     
+
+Matrizea
+   a   b   c   d   <-- classified as
+  63   5  99   1 |   a = negative
+   7  72  98   4 |   b = positive
+  21  23 667  17 |   c = neutral
+   6   3 171 371 |   d = irrelevant
+
+data/tweetSentiment.dev.csv: 495 onak, 0 baztertuak
+Iragarpenak idatzita: mis_predicciones.txt
