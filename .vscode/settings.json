@@ -3,6 +3,7 @@
         "lib/**/*.jar",
         "/home/ubuntu/Deskargak/weka-3-8-6/weka.jar",
         "/home/ubuntu/Downloads/weka-3-8-6-azul-zulu-linux/weka-3-8-6/weka.jar",
-        "c:\\Users\\izasa\\Downloads\\weka-3-8-6\\weka-3-8-6\\weka.jar"
+        "c:\\Users\\izasa\\Downloads\\weka-3-8-6\\weka-3-8-6\\weka.jar",
+        "c:\\Users\\Asier Fernandez\\Downloads\\weka-3-9-6\\weka-3-9-6\\weka.jar"
     ]
 }
