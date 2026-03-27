@@ -1,85 +1,105 @@
 data/tweetSentiment.train.csv: 1628 onak, 3 baztertuak
-
 ========== 1. FASEA: DATU-SORTAREN ANALISIA ==========
 Instantzia kopurua (Training): 1628
-Atributu kopurua: 3
-Atributuak:
-  0. Topic (Mota: nominal)
-  1. Sentiment (Mota: nominal)
-  2. TweetText (Mota: string)
 
-Klaseen banaketa (Sentiment):
-  Klasea negative: 168 instantzia
-  Klasea positive: 181 instantzia
-  Klasea neutral: 728 instantzia
-  Klasea irrelevant: 551 instantzia
-==================================================
+Klaseen banaketa:
+  negative     : 168 instantzia
+  positive     : 181 instantzia
+  neutral      : 728 instantzia
+  irrelevant   : 551 instantzia
+======================================================
 
+========== 2. FASEA: STWV ONDOREN ==========
+Atributu kopurua STWV ondoren: 4449
+(L2 normalizazioa: true, minFreq=2)
+==========================================
 
-========== 5 & 6. FASEAK: SVM-REN EBALUAZIOA ETA DOIKUNTZA ==========
--> SMO (C=0.1) | Accuracy: 57,16% | Weighted F-Measure: 0,5751
--> SMO (C=0.5) | Accuracy: 55,70% | Weighted F-Measure: 0,5541
--> SMO (C=1.0) | Accuracy: 55,99% | Weighted F-Measure: 0,5581
--> SMO (C=2.0) | Accuracy: 55,80% | Weighted F-Measure: 0,5561
--> SMO (C=5.0) | Accuracy: 52,45% | Weighted F-Measure: 0,5157
+========== 3. FASEA: GRID SEARCH (InfoGain × C) ==========
+InfoGain ranking kalkulatuta. Atributu guztiak: 4449
 
-*** Aurkitutako C parametro onena: 0.1 ***
-============================================================
+  nAttr= 500 | C=0,05 | Accuracy=65,40% | Weighted F1=0,6505
+  nAttr= 500 | C=0,10 | Accuracy=67,77% | Weighted F1=0,6745
+  nAttr= 500 | C=0,20 | Accuracy=68,67% | Weighted F1=0,6852
+  nAttr= 500 | C=0,50 | Accuracy=67,83% | Weighted F1=0,6755
+  nAttr= 500 | C=1,00 | Accuracy=66,00% | Weighted F1=0,6563
+  nAttr=1000 | C=0,05 | Accuracy=65,75% | Weighted F1=0,6533
+  nAttr=1000 | C=0,10 | Accuracy=68,35% | Weighted F1=0,6797
+  nAttr=1000 | C=0,20 | Accuracy=69,17% | Weighted F1=0,6891
+  nAttr=1000 | C=0,50 | Accuracy=67,30% | Weighted F1=0,6676
+  nAttr=1000 | C=1,00 | Accuracy=65,63% | Weighted F1=0,6514
+  nAttr=1500 | C=0,05 | Accuracy=66,31% | Weighted F1=0,6581
+  nAttr=1500 | C=0,10 | Accuracy=66,87% | Weighted F1=0,6631
+  nAttr=1500 | C=0,20 | Accuracy=68,16% | Weighted F1=0,6766
+  nAttr=1500 | C=0,50 | Accuracy=67,08% | Weighted F1=0,6655
+  nAttr=1500 | C=1,00 | Accuracy=65,22% | Weighted F1=0,6458
+  nAttr=2000 | C=0,05 | Accuracy=65,61% | Weighted F1=0,6507
+  nAttr=2000 | C=0,10 | Accuracy=65,12% | Weighted F1=0,6456
+  nAttr=2000 | C=0,20 | Accuracy=64,52% | Weighted F1=0,6393
+  nAttr=2000 | C=0,50 | Accuracy=62,17% | Weighted F1=0,6146
+  nAttr=2000 | C=1,00 | Accuracy=61,27% | Weighted F1=0,6051
+  nAttr=guzt | C=0,05 | Accuracy=67,83% | Weighted F1=0,6738
+  nAttr=guzt | C=0,10 | Accuracy=66,55% | Weighted F1=0,6614
+  nAttr=guzt | C=0,20 | Accuracy=65,08% | Weighted F1=0,6452
+  nAttr=guzt | C=0,50 | Accuracy=63,24% | Weighted F1=0,6289
+  nAttr=guzt | C=1,00 | Accuracy=62,35% | Weighted F1=0,6176
 
-Emaitz globalak (Eredu optimoa C=0.1)
-Correctly Classified Instances         930.5991          57.1621 %
-Incorrectly Classified Instances       697.4009          42.8379 %
-Kappa statistic                          0.4288
-Mean absolute error                      0.3088
-Root mean squared error                  0.3949
-Relative absolute error                 82.3392 %
-Root relative squared error             91.1942 %
+*** ONENA: nAttr=1000 | C=0,20 | CV Accuracy=69,17% ***
+==========================================================
+
+========== 5. FASEA: EREDU ONENA ENTRENATU ==========
+Eredu optimoaren CV emaitzak (C=0.2, nAttr=1000)
+Correctly Classified Instances        1126.1608          69.1745 %
+Incorrectly Classified Instances       501.8392          30.8255 %
+Kappa statistic                          0.589 
+Mean absolute error                      0.2929
+Root mean squared error                  0.3732
+Relative absolute error                 78.1072 %
+Root relative squared error             86.197  %
 Total Number of Instances             1628     
 
-Klaseko xehetasunak
+Klaseko xehetasunak (CV)
                  TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
-                 0,351    0,023    0,833      0,351    0,494      0,462    0,796     0,585     negative
-                 0,359    0,042    0,742      0,359    0,484      0,422    0,775     0,531     positive
-                 0,845    0,480    0,370      0,845    0,515      0,319    0,682     0,352     neutral
-                 0,731    0,026    0,902      0,731    0,808      0,759    0,912     0,774     irrelevant
-Weighted Avg.    0,572    0,143    0,712      0,572    0,575      0,491    0,791     0,561     
+                 0,607    0,077    0,724      0,607    0,661      0,564    0,820     0,601     negative
+                 0,597    0,073    0,732      0,597    0,657      0,563    0,800     0,583     positive
+                 0,659    0,171    0,562      0,659    0,607      0,464    0,757     0,467     neutral
+                 0,904    0,090    0,770      0,904    0,832      0,774    0,922     0,738     irrelevant
+Weighted Avg.    0,692    0,103    0,697      0,692    0,689      0,591    0,825     0,597     
 
-Matrizea
+Nahasmendu-matrizea (CV)
    a      b      c      d      <-- classified as
- 142.93  16.96 242.26   4.85 |      a = negative
-   6.75 146.16 242.85  11.24 |      b = positive
-  16.77  30.19 343.83  16.21 |      c = neutral
-   5.17   3.69 100.46 297.68 |      d = irrelevant
+ 247.11  48.45  96.9   14.54 |      a = negative
+  42.72 242.85  83.2   38.23 |      b = positive
+  46.96  34.66 268.35  57.02 |      c = neutral
+   4.43   5.91  28.81 367.85 |      d = irrelevant
 
 data/tweetSentiment.dev.csv: 495 onak, 0 baztertuak
-
-========== 7. FASEA: TEST DATUEN EBALUAZIOA ==========
-Test Emaitz globalak
-Correctly Classified Instances         328               66.5314 %
-Incorrectly Classified Instances       165               33.4686 %
-Kappa statistic                          0.4701
-Mean absolute error                      0.2933
-Root mean squared error                  0.3747
-Relative absolute error                 78.206  %
-Root relative squared error             86.5277 %
+========== 6. FASEA: TEST DATUEN EBALUAZIOA ==========
+Test emaitzak
+Correctly Classified Instances         326               66.1258 %
+Incorrectly Classified Instances       167               33.8742 %
+Kappa statistic                          0.5025
+Mean absolute error                      0.2928
+Root mean squared error                  0.3729
+Relative absolute error                 88.0585 %
+Root relative squared error             91.3222 %
 Total Number of Instances              493     
 Ignored Class Unknown Instances                  2     
 
-Test Klaseko xehetasunak
+Test klaseko xehetasunak
                  TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
-                 0,323    0,035    0,571      0,323    0,412      0,372    0,781     0,377     negative
-                 0,255    0,056    0,324      0,255    0,286      0,222    0,667     0,185     positive
-                 0,844    0,433    0,607      0,844    0,706      0,420    0,705     0,581     neutral
-                 0,675    0,018    0,949      0,675    0,789      0,727    0,877     0,793     irrelevant
-Weighted Avg.    0,665    0,207    0,691      0,665    0,657      0,498    0,769     0,589     
+                 0,419    0,079    0,433      0,419    0,426      0,345    0,790     0,317     negative
+                 0,489    0,099    0,343      0,489    0,404      0,335    0,785     0,261     positive
+                 0,619    0,204    0,707      0,619    0,660      0,424    0,692     0,608     neutral
+                 0,855    0,101    0,811      0,855    0,833      0,745    0,895     0,765     irrelevant
+Weighted Avg.    0,661    0,143    0,673      0,661    0,664      0,514    0,781     0,591     
 
-Test Matrizea
+Test nahasmendu-matrizea
    a   b   c   d   <-- classified as
-  20   6  35   1 |   a = negative
-   3  12  32   0 |   b = positive
-  11  18 184   5 |   c = neutral
-   1   1  52 112 |   d = irrelevant
+  26  10  23   3 |   a = negative
+   3  23  17   4 |   b = positive
+  27  30 135  26 |   c = neutral
+   4   4  16 142 |   d = irrelevant
 
-========================================================
+=======================================================
 
 Iragarpenak idatzita: mis_predicciones.txt
