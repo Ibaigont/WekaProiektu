@@ -29,38 +29,43 @@ import weka.attributeSelection.Ranker;
  * Pipeline optimizatua tweet sentimenduen sailkapenerako.
  *
  * Hobekuntza nagusiak (ClassBalancer berrezarrita):
- *  1. ClassBalancer (pisuak): CV-n egonkorra eta ezaguna den estrategia
- *  2. Grid Search: InfoGain atributu-kopurua × C parametroa bateratua
- *  3. NLP: hiztegia 5000, minFreq=2 (hapax kendu), L2 normalizazioa
- *  4. PolyKernel lineal (NLPrako gomendatua)
+ * 1. ClassBalancer (pisuak): CV-n egonkorra eta ezaguna den estrategia
+ * 2. Grid Search: InfoGain atributu-kopurua × C parametroa bateratua
+ * 3. NLP: hiztegia 5000, minFreq=2 (hapax kendu), L2 normalizazioa
+ * 4. PolyKernel lineal (NLPrako gomendatua)
  */
 public class TweetSentiment {
 
     // ── Konfigurazio nagusia ──────────────────────────────────────────────────
-    private static final boolean INFOGAIN_SEARCH = true;  // true → atributu-kopurua ere optimizatu
-    private static final boolean KERNEL_SEARCH   = false; // true → poly exp=1 vs exp=2 probatu
-    private static final int     CV_FOLDS        = 10;
-    private static final int     RANDOM_SEED     = 42;
+    private static final boolean INFOGAIN_SEARCH = true; // true → atributu-kopurua ere optimizatu
+    private static final boolean KERNEL_SEARCH = false; // true → poly exp=1 vs exp=2 probatu
+    private static final int CV_FOLDS = 10;
+    private static final int RANDOM_SEED = 42;
 
     // StringToWordVector parametroak
-    private static final int     HIZTEGIA        = 5000;  // Hiztegi handiagoa, InfoGain-ek filtratuko du
-    private static final int     MIN_FREQ        = 2;     // Hapax kendu → generalizazio hobea
-    private static final boolean BIGRAMAK        = true;
-    private static final boolean STEMMER         = true;
-    private static final boolean STOPWORDS       = false; // ERAGINKORRA: Rainbow-k "not","never" kentzen ditu → sentimendua galtzen da
-    private static final boolean NORMALIZE_L2    = true;  // L2 normalizazioa SVM-rentzat ezinbestekoa
+    private static final int HIZTEGIA = 5000; // Hiztegi handiagoa, InfoGain-ek filtratuko du
+    private static final int MIN_FREQ = 2; // Hapax kendu → generalizazio hobea
+    private static final boolean BIGRAMAK = true;
+    private static final boolean STEMMER = true;
+    private static final boolean STOPWORDS = false; // ERAGINKORRA: Rainbow-k "not","never" kentzen ditu → sentimendua
+                                                    // galtzen da
+    private static final boolean NORMALIZE_L2 = true; // L2 normalizazioa SVM-rentzat ezinbestekoa
 
     public static void main(String[] args) {
-        String csvPath     = "data/tweetSentiment.train.csv";
+        String csvPath = "data/tweetSentiment.train.csv";
         String csvTestPath = "data/tweetSentiment.dev.csv";
-        String outputPath  = "Iragarpenak/iragarpenak.txt";
-        String logPath     = "Iragarpenak/informe_resultados.txt";
+        String outputPath = "Iragarpenak/iragarpenak.txt";
+        String logPath = "Iragarpenak/informe_resultados.txt";
 
         if (args.length >= 4) {
-            csvPath = args[0]; csvTestPath = args[1];
-            outputPath = args[2]; logPath = args[3];
+            csvPath = args[0];
+            csvTestPath = args[1];
+            outputPath = args[2];
+            logPath = args[3];
         } else if (args.length >= 3) {
-            csvPath = args[0]; csvTestPath = args[1]; outputPath = args[2];
+            csvPath = args[0];
+            csvTestPath = args[1];
+            outputPath = args[2];
         }
 
         PrintStream konsola = System.out;
@@ -93,10 +98,11 @@ public class TweetSentiment {
             int[] counts = dataFiltratuta.attributeStats(dataFiltratuta.classIndex()).nominalCounts;
             for (int i = 0; i < dataFiltratuta.numClasses(); i++) {
                 System.out.printf("  %-12s : %d instantzia%n",
-                    dataFiltratuta.classAttribute().value(i), counts[i]);
+                        dataFiltratuta.classAttribute().value(i), counts[i]);
             }
 
-            // OHARRA: ClassBalancer InfoGain ONDOREN aplikatuko da (InfoGainAttributeEval-ek
+            // OHARRA: ClassBalancer InfoGain ONDOREN aplikatuko da
+            // (InfoGainAttributeEval-ek
             // ez ditu onartzen pisuak ez diren 1.0 diren instantziak).
             System.out.println("======================================================\n");
 
@@ -128,13 +134,13 @@ public class TweetSentiment {
 
             // Grid parametroak
             int[] atributuKopuruak = INFOGAIN_SEARCH
-                ? new int[]{500, 1000, 1500, 2000, -1}  // -1 = guztiak
-                : new int[]{-1};
-            double[] cBalioak = {0.05, 0.1, 0.2, 0.5, 1.0};
+                    ? new int[] { 500, 1000, 1500, 2000, -1 } // -1 = guztiak
+                    : new int[] { -1 };
+            double[] cBalioak = { 0.05, 0.1, 0.2, 0.5, 1.0 };
 
-            double onenaScore  = -1.0;  // Accuracy-z optimizatzen dugu
-            int    onenaAtributuK = -1;
-            double onenaC         = 0.1;
+            double onenaScore = -1.0; // Accuracy-z optimizatzen dugu
+            int onenaAtributuK = -1;
+            double onenaC = 0.1;
 
             // InfoGain ranking osoa kalkulatu behin (efizientzia)
             AttributeSelection attrSelFull = new AttributeSelection();
@@ -145,7 +151,7 @@ public class TweetSentiment {
             attrSelFull.setInputFormat(dataBektorea);
             Instances dataBektoreaRanked = Filter.useFilter(dataBektorea, attrSelFull);
             System.out.println("InfoGain ranking kalkulatuta. Atributu guztiak: "
-                + dataBektoreaRanked.numAttributes() + "\n");
+                    + dataBektoreaRanked.numAttributes() + "\n");
 
             for (int nAttr : atributuKopuruak) {
                 // 1) Atributu-hautaketa (InfoGain pisurik gabeko datuetan)
@@ -175,19 +181,19 @@ public class TweetSentiment {
                     double acc = evalGrid.pctCorrect();
                     double wF1 = evalGrid.weightedFMeasure();
                     System.out.printf("  nAttr=%4s | C=%.2f | Accuracy=%.2f%% | Weighted F1=%.4f%n",
-                        nAttr == -1 ? "guzt" : String.valueOf(nAttr), c, acc, wF1);
+                            nAttr == -1 ? "guzt" : String.valueOf(nAttr), c, acc, wF1);
 
                     if (acc > onenaScore) {
-                        onenaScore     = acc;
+                        onenaScore = acc;
                         onenaAtributuK = nAttr;
-                        onenaC         = c;
+                        onenaC = c;
                     }
                 }
             }
 
             System.out.printf("%n*** ONENA: nAttr=%s | C=%.2f | CV Accuracy=%.2f%% ***%n",
-                onenaAtributuK == -1 ? "guztiak" : String.valueOf(onenaAtributuK),
-                onenaC, onenaScore);
+                    onenaAtributuK == -1 ? "guztiak" : String.valueOf(onenaAtributuK),
+                    onenaC, onenaScore);
             System.out.println("==========================================================\n");
 
             // ════════════════════════════════════════════════════════════════
@@ -197,12 +203,12 @@ public class TweetSentiment {
                 // Onena aurkitutako nAttr-ekin iragazkia prestatu
                 Instances datuakKernel = preparatuDatuak(dataBektorea, onenaAtributuK);
                 System.out.println("========== KERNEL BILAKETA ==========");
-                for (double exp : new double[]{1.0, 2.0}) {
+                for (double exp : new double[] { 1.0, 2.0 }) {
                     SMO smoK = eraikitzaileSMO(onenaC, exp);
                     Evaluation evalK = new Evaluation(datuakKernel);
                     evalK.crossValidateModel(smoK, datuakKernel, CV_FOLDS, new Random(RANDOM_SEED));
                     System.out.printf("  Poly(exp=%.0f) | C=%.2f | Accuracy=%.2f%% | F1=%.4f%n",
-                        exp, onenaC, evalK.pctCorrect(), evalK.weightedFMeasure());
+                            exp, onenaC, evalK.pctCorrect(), evalK.weightedFMeasure());
                 }
                 System.out.println("=====================================\n");
             }
@@ -214,7 +220,7 @@ public class TweetSentiment {
 
             // Atributu-hautaketa finala (InfoGain pisurik gabeko datuetan)
             AttributeSelection attrSelFinal = null;
-            Instances datuakFinalak;       // pisurik gabeko bertsioa → testrako erreferentzia
+            Instances datuakFinalak; // pisurik gabeko bertsioa → testrako erreferentzia
             Instances datuakFinalakOrekat; // ClassBalancer-ekin → CV eta entrenamendu finalerako
 
             if (onenaAtributuK != -1 && onenaAtributuK < dataBektoreaRanked.numAttributes()) {
@@ -227,7 +233,7 @@ public class TweetSentiment {
                 datuakFinalak = Filter.useFilter(dataBektorea, attrSelFinal);
             } else {
                 datuakFinalak = dataBektoreaRanked;
-                attrSelFinal  = attrSelFull;
+                attrSelFinal = attrSelFull;
             }
 
             // ClassBalancer: InfoGain ONDOREN aplikatu
@@ -241,8 +247,9 @@ public class TweetSentiment {
             evalOnena.crossValidateModel(smoOnena, datuakFinalakOrekat, CV_FOLDS, new Random(RANDOM_SEED));
 
             System.out.println(evalOnena.toSummaryString(
-                "Eredu optimoaren CV emaitzak (C=" + onenaC + ", nAttr=" +
-                (onenaAtributuK == -1 ? "guztiak" : onenaAtributuK) + ")", false));
+                    "Eredu optimoaren CV emaitzak (C=" + onenaC + ", nAttr=" +
+                            (onenaAtributuK == -1 ? "guztiak" : onenaAtributuK) + ")",
+                    false));
             System.out.println(evalOnena.toClassDetailsString("Klaseko xehetasunak (CV)"));
             System.out.println(evalOnena.toMatrixString("Nahasmendu-matrizea (CV)"));
 
@@ -266,14 +273,16 @@ public class TweetSentiment {
 
                 String topicVal = testData.instance(i).stringValue(0);
                 vals[0] = dataFiltratuta.attribute(0).indexOfValue(topicVal);
-                if (vals[0] < 0) vals[0] = Utils.missingValue();
+                if (vals[0] < 0)
+                    vals[0] = Utils.missingValue();
 
                 if (testData.instance(i).isMissing(1)) {
                     vals[1] = Utils.missingValue();
                 } else {
                     String sentimentVal = testData.instance(i).stringValue(1);
                     vals[1] = dataFiltratuta.attribute(1).indexOfValue(sentimentVal);
-                    if (vals[1] < 0) vals[1] = Utils.missingValue();
+                    if (vals[1] < 0)
+                        vals[1] = Utils.missingValue();
                 }
 
                 String textVal = testData.instance(i).stringValue(4);
@@ -282,8 +291,10 @@ public class TweetSentiment {
             }
             testEgitura.setClassIndex(1);
 
-            // Test datuen transformazioa (filter berdinak training-etik, hurrenkera garrantzitsua)
-            // OHARRA: ClassBalancer EZ da aplikatzen test datuetan (pisuak training-erako soilik)
+            // Test datuen transformazioa (filter berdinak training-etik, hurrenkera
+            // garrantzitsua)
+            // OHARRA: ClassBalancer EZ da aplikatzen test datuetan (pisuak training-erako
+            // soilik)
             Instances testBektorea = Filter.useFilter(testEgitura, stwv);
             if (NORMALIZE_L2 && normalizeFilter != null) {
                 testBektorea = Filter.useFilter(testBektorea, normalizeFilter);
@@ -336,8 +347,8 @@ public class TweetSentiment {
         stwv.setLowerCaseTokens(true);
         stwv.setTFTransform(true);
         stwv.setIDFTransform(true);
-        stwv.setMinTermFreq(MIN_FREQ);    // Hapax legomena kendu: hitz bakarrean agertzen direnak zarata dira
-        stwv.setOutputWordCounts(false);   // TF-IDF-rekin ez behar word counts
+        stwv.setMinTermFreq(MIN_FREQ); // Hapax legomena kendu: hitz bakarrean agertzen direnak zarata dira
+        stwv.setOutputWordCounts(false); // TF-IDF-rekin ez behar word counts
 
         if (BIGRAMAK) {
             NGramTokenizer tokenizer = new NGramTokenizer();
