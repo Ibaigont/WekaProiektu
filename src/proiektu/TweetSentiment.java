@@ -9,9 +9,9 @@ public class TweetSentiment {
 
     public static void main(String[] args) {
         // --- Experimentatzeko balioak ---
-        boolean stemmerErabili = true;
-        boolean stopWordsErabili = true;
-        boolean bigramakErabili = false;
+        boolean stemmerErabili  = true;
+        boolean stopWordsErabili = false;
+        boolean bigramakErabili = true;
         int hiztegiTamaina = 1000;
         boolean atributuakOptimizatu = true;
         int azkenAtributuKopurua = 300;
