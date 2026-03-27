@@ -12,9 +12,10 @@ public class TweetSentiment {
         boolean stemmerErabili  = true;
         boolean stopWordsErabili = false;
         boolean bigramakErabili = true;
-        int hiztegiTamaina = 1000;
+        int hiztegiTamaina = 3000;          // Aumentado para tener mas vocabulario
         boolean atributuakOptimizatu = true;
-        int azkenAtributuKopurua = 300;
+        int azkenAtributuKopurua = 1000;    // Aumentado atributos finales
+        boolean datuakOrekatzeko = true;    // Klaseak orekatu
         // --------------------------------------------------
 
         String csvPath = "data/tweetSentiment.train.csv";
@@ -48,6 +49,17 @@ public class TweetSentiment {
             Instances vectorTrainData = pipeline.applyTrainFilters(
                 baseTrainData, stemmerErabili, stopWordsErabili, bigramakErabili, hiztegiTamaina, azkenAtributuKopurua
             );
+
+            // Datuak orekatzeko Resample iragazkia aplikatu
+            if (datuakOrekatzeko) {
+                jatorrizkoKontsola.println("[+] Datuak orekatzen (Resample)...");
+                weka.filters.supervised.instance.Resample resample = new weka.filters.supervised.instance.Resample();
+                resample.setBiasToUniformClass(1.0); // Klaseak banaketa uniformera eraman
+                resample.setNoReplacement(false);    // Oversampling
+                resample.setSampleSizePercent(150.0); // Datu basea %150 handitu
+                resample.setInputFormat(vectorTrainData);
+                vectorTrainData = weka.filters.Filter.useFilter(vectorTrainData, resample);
+            }
 
             // 3. Eredua entrenatu eta ebaluatu (Cross-Validation)
             ModelManager modelManager = new ModelManager();

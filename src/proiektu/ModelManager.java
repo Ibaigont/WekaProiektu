@@ -13,7 +13,7 @@ public class ModelManager {
         System.out.println("\n========== 5 & 6. FASEAK: SVM-REN EBALUAZIOA ETA DOIKUNTZA ==========");
         double[] cValues = {0.1, 1.0, 5.0};
         double bestC = 1.0;
-        double bestAccuracy = -1.0;
+        double bestFMeasure = -1.0;
         
         for (double c : cValues) {
             SMO tempSmo = new SMO();
@@ -25,8 +25,8 @@ public class ModelManager {
             double fMeasure = evalTemp.weightedFMeasure();
             System.out.println("-> SMO (C=" + c + ") | Accuracy: " + String.format("%.2f%%", accuracy) + " | Weighted F-Measure: " + String.format("%.4f", fMeasure));
             
-            if (accuracy > bestAccuracy) {
-                bestAccuracy = accuracy;
+            if (fMeasure > bestFMeasure) {
+                bestFMeasure = fMeasure;
                 bestC = c;
             }
         }
