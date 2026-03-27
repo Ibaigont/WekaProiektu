@@ -184,8 +184,11 @@ public class TweetSentiment {
                 if (vals[0] < 0)
                     vals[0] = Utils.missingValue();
                 
-                // 2. Sentiment (en testData es la 1, pero es Ciego)
-                vals[1] = Utils.missingValue();
+                // 2. Sentiment (orain ez da itsua, dev-ek datuak baditu eta ebaluatu nahi dugu)
+                String sentimentVal = testData.instance(i).stringValue(1);
+                vals[1] = dataFiltratuta.attribute(1).indexOfValue(sentimentVal);
+                if (vals[1] < 0)
+                    vals[1] = Utils.missingValue();
                 
                 // 3. TweetText (en testData es la 4, ya que no hemos aplicado removeFilter)
                 String textVal = testData.instance(i).stringValue(4);
@@ -201,7 +204,15 @@ public class TweetSentiment {
                 testBektorea = Filter.useFilter(testBektorea, attrSel);
             }
 
-            // ── 7. Iragarpenak idatzi ─────────────────────────────────────────
+            // ── 7. Iragarpenak idatzi eta ebaluatu ────────────────────────────
+            Evaluation evalTest = new Evaluation(dataBektorea);
+            evalTest.evaluateModel(smo, testBektorea);
+            System.out.println("\n========== 8. FASEA: TEST DATUEN EBALUAZIOA (DEV CSV) ==========");
+            System.out.println(evalTest.toSummaryString("Emaitz globalak (Test Datuetan)", false));
+            System.out.println(evalTest.toClassDetailsString("Klaseko xehetasunak (Test Datuetan)"));
+            System.out.println(evalTest.toMatrixString("Matrizea (Test Datuetan)"));
+            System.out.println("=================================================================\n");
+
             try (FileWriter f = new FileWriter(outputPath)) {
                 for (int i = 0; i < testBektorea.numInstances(); i++) {
                     double pred = smo.classifyInstance(testBektorea.instance(i));

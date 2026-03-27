@@ -55,4 +55,34 @@ Matrizea
    6   3 171 371 |   d = irrelevant
 
 data/tweetSentiment.dev.csv: 495 onak, 0 baztertuak
-Iragarpenak idatzita: mis_predicciones.txt
+
+========== 8. FASEA: TEST DATUEN EBALUAZIOA (DEV CSV) ==========
+Emaitz globalak (Test Datuetan)
+Correctly Classified Instances         316               64.0974 %
+Incorrectly Classified Instances       177               35.9026 %
+Kappa statistic                          0.4189
+Mean absolute error                      0.2961
+Root mean squared error                  0.3778
+Relative absolute error                 89.0753 %
+Root relative squared error             92.5261 %
+Total Number of Instances              493     
+Ignored Class Unknown Instances                  2     
+
+Klaseko xehetasunak (Test Datuetan)
+                 TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
+                 0,226    0,046    0,412      0,226    0,292      0,235    0,708     0,273     negative
+                 0,170    0,034    0,348      0,170    0,229      0,190    0,697     0,202     positive
+                 0,899    0,498    0,589      0,899    0,711      0,425    0,698     0,571     neutral
+                 0,590    0,015    0,951      0,590    0,729      0,668    0,856     0,754     irrelevant
+Weighted Avg.    0,641    0,234    0,666      0,641    0,618      0,461    0,753     0,560     
+
+Matrizea (Test Datuetan)
+   a   b   c   d   <-- classified as
+  14   4  43   1 |   a = negative
+   3   8  36   0 |   b = positive
+  10   8 196   4 |   c = neutral
+   7   3  58  98 |   d = irrelevant
+
+=================================================================
+
+Iragarpenak idatzita: Iragarpenak/iragarpenak.txt
