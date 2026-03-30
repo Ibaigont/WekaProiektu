@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import weka.core.Instances;
+import weka.filters.MultiFilter;
 
 public class TweetSentiment {
 
@@ -12,10 +13,10 @@ public class TweetSentiment {
         boolean stemmerErabili  = true;
         boolean stopWordsErabili = false;
         boolean bigramakErabili = true;
-        int hiztegiTamaina = 3000;          // Aumentado para tener mas vocabulario
+        int hiztegiTamaina = 1500;          
         boolean atributuakOptimizatu = true;
-        int azkenAtributuKopurua = 1000;    // Aumentado atributos finales
-        boolean datuakOrekatzeko = true;    // Klaseak orekatu
+        int azkenAtributuKopurua = 700;    
+        boolean datuakOrekatzeko = true;    
         // --------------------------------------------------
 
         String csvPath = "data/tweetSentiment.train.csv";
@@ -40,40 +41,28 @@ public class TweetSentiment {
             jatorrizkoKontsola.println("\n[+] Weka pipeline-a exekutatzen...");
             jatorrizkoKontsola.println("[+] KONTUZ: Kontsola isilik egongo da, analisia gordetzen ari delako hemen: " + logPath + "\n");
 
-            // 1. Train datuak kargatu eta garbitu
+            // 1. Train datuak kargatu eta garbitu (GORDINAK dira)
             File cleanTrain = CSVPreprocessor.preprocessCSV(csvPath, true);
             Instances baseTrainData = DatasetManager.loadTrainData(cleanTrain);
 
-            // 2. Text Pipeline aplikatu (Train)
-            TextPipeline pipeline = new TextPipeline(atributuakOptimizatu);
-            Instances vectorTrainData = pipeline.applyTrainFilters(
-                baseTrainData, stemmerErabili, stopWordsErabili, bigramakErabili, hiztegiTamaina, azkenAtributuKopurua
+            // 2. Iragazkien paketea sortu (Datuak ez dira hemen aldatzen)
+            TextPipeline pipeline = new TextPipeline();
+            MultiFilter multiFilter = pipeline.getMultiFilter(
+                stemmerErabili, stopWordsErabili, bigramakErabili, hiztegiTamaina, atributuakOptimizatu, azkenAtributuKopurua, datuakOrekatzeko
             );
 
-            // Datuak orekatzeko Resample iragazkia aplikatu
-            if (datuakOrekatzeko) {
-                jatorrizkoKontsola.println("[+] Datuak orekatzen (Resample)...");
-                weka.filters.supervised.instance.Resample resample = new weka.filters.supervised.instance.Resample();
-                resample.setBiasToUniformClass(1.0); // Klaseak banaketa uniformera eraman
-                resample.setNoReplacement(false);    // Oversampling
-                resample.setSampleSizePercent(150.0); // Datu basea %150 handitu
-                resample.setInputFormat(vectorTrainData);
-                vectorTrainData = weka.filters.Filter.useFilter(vectorTrainData, resample);
-            }
-
-            // 3. Eredua entrenatu eta ebaluatu (Cross-Validation)
+            // 3. Eredua entrenatu eta ebaluatu (FilteredClassifier-ak dena egingo du barruan)
             ModelManager modelManager = new ModelManager();
-            modelManager.trainAndEvaluate(vectorTrainData);
+            // Datu gordinak pasatzen dizkiogu, iragazkien paketearekin batera
+            modelManager.trainAndEvaluate(baseTrainData, multiFilter);
 
             // 4. Test datuak kargatu eta egitura berreraiki
             File cleanTest = CSVPreprocessor.preprocessCSV(csvTestPath, false);
             Instances baseTestData = DatasetManager.buildTestData(cleanTest, baseTrainData);
 
-            // 5. Text Pipeline aplikatu (Test datuetan)
-            Instances vectorTestData = pipeline.applyTestFilters(baseTestData);
-
-            // 6. Iragarpenak sortu
-            modelManager.testAndPredict(vectorTestData, vectorTrainData, outputPath);
+            // 5. Iragarpenak sortu
+            // FilteredClassifier-ak berak modu automatikoan aplikatuko dizkio iragazkiak test datuei
+            modelManager.testAndPredict(baseTestData, baseTrainData, outputPath);
 
             System.out.flush();
             System.setOut(jatorrizkoKontsola);

@@ -1,71 +1,66 @@
 data/tweetSentiment.train.csv: 1628 onak, 3 baztertuak
 
-========== 4. FASEA: ATRIBUTUEN HAUTAKETA ==========
-InfoGain ondoren hautatutako atributuak: 1001
-====================================================
+========== 5 & 6. FASEAK: FILTERED CLASSIFIER EBALUAZIOA ==========
+-> FilteredClassifier SMO (C=0.1) | Accuracy: 67.75% | Weighted F-Measure: 0.6766
+-> FilteredClassifier SMO (C=1.0) | Accuracy: 65.85% | Weighted F-Measure: 0.6589
+-> FilteredClassifier SMO (C=5.0) | Accuracy: 63.08% | Weighted F-Measure: 0.6340
 
-
-========== 5 & 6. FASEAK: SVM-REN EBALUAZIOA ETA DOIKUNTZA ==========
--> SMO (C=0.1) | Accuracy: 78,28% | Weighted F-Measure: 0,7822
--> SMO (C=1.0) | Accuracy: 85,66% | Weighted F-Measure: 0,8552
--> SMO (C=5.0) | Accuracy: 87,70% | Weighted F-Measure: 0,8752
-
-*** Aurkitutako C parametro onena: 5.0 ***
+*** Aurkitutako C parametro onena: 0.1 ***
 ============================================================
 
-Emaitz globalak (Eredu optimoa C=5.0)
-Correctly Classified Instances        2140               87.7049 %
-Incorrectly Classified Instances       300               12.2951 %
-Kappa statistic                          0.8361
-Mean absolute error                      0.2647
-Root mean squared error                  0.3323
-Relative absolute error                 70.592  %
-Root relative squared error             76.751  %
-Total Number of Instances             2440     
+Emaitz globalak (Eredu optimoa C=0.1)
+Correctly Classified Instances        1103               67.7518 %
+Incorrectly Classified Instances       525               32.2482 %
+Kappa statistic                          0.5218
+Mean absolute error                      0.291 
+Root mean squared error                  0.3708
+Relative absolute error                 87.8054 %
+Root relative squared error             91.1155 %
+Total Number of Instances             1628     
 
 Klaseko xehetasunak
                  TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
-                 0,939    0,045    0,875      0,939    0,906      0,874    0,967     0,881     negative
-                 0,925    0,031    0,910      0,925    0,917      0,889    0,957     0,899     positive
-                 0,736    0,031    0,887      0,736    0,805      0,753    0,883     0,739     neutral
-                 0,908    0,057    0,841      0,908    0,873      0,830    0,948     0,808     irrelevant
-Weighted Avg.    0,877    0,041    0,878      0,877    0,875      0,836    0,939     0,832     
+                 0.530    0.091    0.401      0.530    0.456      0.389    0.790     0.294     negative
+                 0.392    0.062    0.441      0.392    0.415      0.348    0.742     0.288     positive
+                 0.633    0.182    0.738      0.633    0.681      0.461    0.717     0.638     neutral
+                 0.875    0.128    0.777      0.875    0.823      0.728    0.892     0.744     irrelevant
+Weighted Avg.    0.678    0.141    0.683      0.678    0.677      0.531    0.787     0.599     
 
 Matrizea
    a   b   c   d   <-- classified as
- 573   9  18  10 |   a = negative
-   8 564  10  28 |   b = positive
-  59  35 449  67 |   c = neutral
-  15  12  29 554 |   d = irrelevant
+  89  17  54   8 |   a = negative
+  34  71  57  19 |   b = positive
+  89  67 461 111 |   c = neutral
+  10   6  53 482 |   d = irrelevant
 
 data/tweetSentiment.dev.csv: 495 onak, 0 baztertuak
 
 ========== 8. FASEA: TEST DATUEN EBALUAZIOA (DEV CSV) ==========
 Emaitz globalak (Test Datuetan)
-Correctly Classified Instances         281               56.998  %
-Incorrectly Classified Instances       212               43.002  %
-Kappa statistic                          0.384 
-Mean absolute error                      0.3088
-Root mean squared error                  0.3913
-Relative absolute error                 82.3529 %
-Root relative squared error             90.3586 %
+Correctly Classified Instances         331               67.14   %
+Incorrectly Classified Instances       162               32.86   %
+Kappa statistic                          0.5155
+Mean absolute error                      0.2923
+Root mean squared error                  0.3724
+Relative absolute error                 87.9059 %
+Root relative squared error             91.2019 %
 Total Number of Instances              493     
 Ignored Class Unknown Instances                  2     
 
 Klaseko xehetasunak (Test Datuetan)
                  TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
-                 0,387    0,160    0,258      0,387    0,310      0,192    0,729     0,236     negative
-                 0,404    0,110    0,279      0,404    0,330      0,251    0,695     0,199     positive
-                 0,528    0,233    0,642      0,528    0,579      0,304    0,631     0,550     neutral
-                 0,741    0,092    0,804      0,741    0,771      0,663    0,861     0,719     irrelevant
-Weighted Avg.    0,570    0,164    0,614      0,570    0,586      0,406    0,727     0,534     
+                 0.500    0.095    0.431      0.500    0.463      0.380    0.804     0.341     negative
+                 0.404    0.065    0.396      0.404    0.400      0.336    0.754     0.240     positive
+                 0.615    0.182    0.728      0.615    0.667      0.444    0.697     0.615     neutral
+                 0.886    0.128    0.778      0.886    0.828      0.736    0.885     0.740     irrelevant
+Weighted Avg.    0.671    0.142    0.676      0.671    0.670      0.524    0.779     0.587     
 
 Matrizea (Test Datuetan)
    a   b   c   d   <-- classified as
-  24   9  25   4 |   a = negative
-  10  19  13   5 |   b = positive
-  48  34 115  21 |   c = neutral
-  11   6  26 123 |   d = irrelevant
+  31   8  19   4 |   a = negative
+   6  19  16   6 |   b = positive
+  31  21 134  32 |   c = neutral
+   4   0  15 147 |   d = irrelevant
 
 =================================================================
 

@@ -1,21 +1,22 @@
 package proiektu;
 
-import weka.core.Instances;
 import weka.filters.Filter;
+import weka.filters.MultiFilter;
 import weka.filters.unsupervised.attribute.StringToWordVector;
 import weka.filters.supervised.attribute.AttributeSelection;
+import weka.filters.supervised.instance.Resample;
+import java.util.ArrayList;
 
 public class TextPipeline {
-    private StringToWordVector stwv;
-    private AttributeSelection attrSel;
-    private final boolean useAttrOptimization;
+    
+    
+    // Iragazkien konfigurazioa (MultiFilter) itzultzen du soilik.
+    public MultiFilter getMultiFilter(boolean stemmer, boolean stopWords, boolean bigrams, int vocabSize, boolean useAttrOptimization, int numAttrs, boolean balanceData) throws Exception {
+        
+        ArrayList<Filter> iragazkiZerrenda = new ArrayList<>();
 
-    public TextPipeline(boolean useAttrOptimization) {
-        this.useAttrOptimization = useAttrOptimization;
-    }
-
-    public Instances applyTrainFilters(Instances data, boolean stemmer, boolean stopWords, boolean bigrams, int vocabSize, int numAttrs) throws Exception {
-        stwv = new StringToWordVector();
+        // 1. StringToWordVector (Bektorizazioa)
+        StringToWordVector stwv = new StringToWordVector();
         stwv.setAttributeIndices("last");
         stwv.setWordsToKeep(vocabSize);
         stwv.setLowerCaseTokens(true);
@@ -28,40 +29,35 @@ public class TextPipeline {
             tokenizer.setNGramMaxSize(2);
             stwv.setTokenizer(tokenizer);
         }
+        if (stemmer) stwv.setStemmer(new weka.core.stemmers.IteratedLovinsStemmer());
+        if (stopWords) stwv.setStopwordsHandler(new weka.core.stopwords.Rainbow());
+        
+        iragazkiZerrenda.add(stwv); // Lehenengo iragazkia gehitu
 
-        if (stemmer) {
-            stwv.setStemmer(new weka.core.stemmers.IteratedLovinsStemmer());
-        }
-
-        if (stopWords) {
-            stwv.setStopwordsHandler(new weka.core.stopwords.Rainbow());
-        }
-
-        stwv.setInputFormat(data);
-        Instances vectorData = Filter.useFilter(data, stwv);
-
+        // 2. AttributeSelection (Atributu hautaketa)
         if (useAttrOptimization) {
-            attrSel = new AttributeSelection();
+            AttributeSelection attrSel = new AttributeSelection();
             weka.attributeSelection.InfoGainAttributeEval evalInfo = new weka.attributeSelection.InfoGainAttributeEval();
             weka.attributeSelection.Ranker ranker = new weka.attributeSelection.Ranker();
             ranker.setNumToSelect(numAttrs);
             attrSel.setEvaluator(evalInfo);
             attrSel.setSearch(ranker);
-            attrSel.setInputFormat(vectorData);
-            vectorData = Filter.useFilter(vectorData, attrSel);
-            
-            System.out.println("\n========== 4. FASEA: ATRIBUTUEN HAUTAKETA ==========");
-            System.out.println("InfoGain ondoren hautatutako atributuak: " + vectorData.numAttributes());
-            System.out.println("====================================================\n");
+            iragazkiZerrenda.add(attrSel); // Bigarren iragazkia gehitu
         }
-        return vectorData;
-    }
 
-    public Instances applyTestFilters(Instances testData) throws Exception {
-        Instances vectorTest = Filter.useFilter(testData, stwv);
-        if (useAttrOptimization && attrSel != null) {
-            vectorTest = Filter.useFilter(vectorTest, attrSel);
+        // 3. Resample (Datuak orekatzea)
+        if (balanceData) {
+            Resample resample = new Resample();
+            resample.setBiasToUniformClass(1.0); 
+            resample.setNoReplacement(false);    // Oversampling
+            resample.setSampleSizePercent(150.0);
+            iragazkiZerrenda.add(resample); // Hirugarren iragazkia gehitu
         }
-        return vectorTest;
+
+        // Dena MultiFilter batean sartu eta itzuli
+        MultiFilter multiFilter = new MultiFilter();
+        multiFilter.setFilters(iragazkiZerrenda.toArray(new Filter[0]));
+        
+        return multiFilter;
     }
 }

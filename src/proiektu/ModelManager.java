@@ -2,28 +2,40 @@ package proiektu;
 
 import weka.classifiers.Evaluation;
 import weka.classifiers.functions.SMO;
+import weka.classifiers.meta.FilteredClassifier;
 import weka.core.Instances;
+import weka.filters.MultiFilter;
 import java.util.Random;
 import java.io.FileWriter;
 
 public class ModelManager {
-    private SMO bestModel;
+    // KONTUZ HEMEN: Orain ez da SMO bat gordetzen, FilteredClassifier bat baizik
+    private FilteredClassifier bestModel;
 
-    public void trainAndEvaluate(Instances trainData) throws Exception {
-        System.out.println("\n========== 5 & 6. FASEAK: SVM-REN EBALUAZIOA ETA DOIKUNTZA ==========");
+    // Funtzioak datu gordinak eta iragazkien paketea jasotzen ditu
+    public void trainAndEvaluate(Instances trainDataRaw, MultiFilter multiFilter) throws Exception {
+        System.out.println("\n========== 5 & 6. FASEAK: FILTERED CLASSIFIER EBALUAZIOA ==========");
         double[] cValues = {0.1, 1.0, 5.0};
         double bestC = 1.0;
         double bestFMeasure = -1.0;
         
         for (double c : cValues) {
+            // Oinarrizko eredua (SVM)
             SMO tempSmo = new SMO();
             tempSmo.setC(c);
-            Evaluation evalTemp = new Evaluation(trainData);
-            evalTemp.crossValidateModel(tempSmo, trainData, 10, new Random(1));
+            
+            // FILTERED CLASSIFIER: Iragazkiak + Eredua elkartu
+            FilteredClassifier fc = new FilteredClassifier();
+            fc.setFilter(multiFilter);
+            fc.setClassifier(tempSmo);
+            
+            // Ebaluazioa Cross-Validation bitartez (Datu gordinekin!)
+            Evaluation evalTemp = new Evaluation(trainDataRaw);
+            evalTemp.crossValidateModel(fc, trainDataRaw, 10, new Random(1));
             
             double accuracy = evalTemp.pctCorrect();
             double fMeasure = evalTemp.weightedFMeasure();
-            System.out.println("-> SMO (C=" + c + ") | Accuracy: " + String.format("%.2f%%", accuracy) + " | Weighted F-Measure: " + String.format("%.4f", fMeasure));
+            System.out.println("-> FilteredClassifier SMO (C=" + c + ") | Accuracy: " + String.format("%.2f%%", accuracy) + " | Weighted F-Measure: " + String.format("%.4f", fMeasure));
             
             if (fMeasure > bestFMeasure) {
                 bestFMeasure = fMeasure;
@@ -33,21 +45,30 @@ public class ModelManager {
         System.out.println("\n*** Aurkitutako C parametro onena: " + bestC + " ***");
         System.out.println("============================================================\n");
 
-        bestModel = new SMO();
-        bestModel.setC(bestC);
-        Evaluation evalBest = new Evaluation(trainData);
-        evalBest.crossValidateModel(bestModel, trainData, 10, new Random(1));
+        // Parametro optimoarekin eredu finala eratu
+        SMO optimoSmo = new SMO();
+        optimoSmo.setC(bestC);
+        
+        bestModel = new FilteredClassifier();
+        bestModel.setFilter(multiFilter);
+        bestModel.setClassifier(optimoSmo);
+        
+        // Eredu optimoaren ebaluazio osoa inprimatu
+        Evaluation evalBest = new Evaluation(trainDataRaw);
+        evalBest.crossValidateModel(bestModel, trainDataRaw, 10, new Random(1));
         System.out.println(evalBest.toSummaryString("Emaitz globalak (Eredu optimoa C=" + bestC + ")", false));
         System.out.println(evalBest.toClassDetailsString("Klaseko xehetasunak"));
         System.out.println(evalBest.toMatrixString("Matrizea"));
 
-        // Eredu osoarekin entrenatu
-        bestModel.buildClassifier(trainData);
+        // Eredu osoarekin entrenatu datu guztiekink (Gero test-erako erabiltzeko)
+        bestModel.buildClassifier(trainDataRaw);
     }
 
-    public void testAndPredict(Instances testData, Instances trainData, String outputPath) throws Exception {
-        Evaluation evalTest = new Evaluation(trainData);
-        evalTest.evaluateModel(bestModel, testData);
+    public void testAndPredict(Instances testDataRaw, Instances trainDataRaw, String outputPath) throws Exception {
+        Evaluation evalTest = new Evaluation(trainDataRaw);
+        // Test datu gordinak pasatzen ditugu! bestModel-ek bere barruan dituen iragazkiak aplikatuko dizkie bere kabuz
+        evalTest.evaluateModel(bestModel, testDataRaw);
+        
         System.out.println("\n========== 8. FASEA: TEST DATUEN EBALUAZIOA (DEV CSV) ==========");
         System.out.println(evalTest.toSummaryString("Emaitz globalak (Test Datuetan)", false));
         System.out.println(evalTest.toClassDetailsString("Klaseko xehetasunak (Test Datuetan)"));
@@ -55,9 +76,9 @@ public class ModelManager {
         System.out.println("=================================================================\n");
 
         try (FileWriter f = new FileWriter(outputPath)) {
-            for (int i = 0; i < testData.numInstances(); i++) {
-                double pred = bestModel.classifyInstance(testData.instance(i));
-                String predLabel = trainData.classAttribute().value((int) pred);
+            for (int i = 0; i < testDataRaw.numInstances(); i++) {
+                double pred = bestModel.classifyInstance(testDataRaw.instance(i));
+                String predLabel = trainDataRaw.classAttribute().value((int) pred);
                 f.write(predLabel + "\n");
             }
         }
