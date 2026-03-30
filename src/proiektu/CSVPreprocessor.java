@@ -4,14 +4,30 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * CSV fitxategiak kargatu aurretik garbitzeko eta prestatzeko erabiltzen den klase laguntzailea.
+ * Bereziki, txioak (tweets) dituzten fitxategietako formatu-erroreak (adibidez, komatxo arteko lerro-jauziak)
+ * konpontzen ditu, eta nahi izanez gero, maiztasun txikiko klaseak edo "klase fantasmak" baztertzen ditu.
+ * * @version 1.0
+ */
 public class CSVPreprocessor {
 
     /**
-     * CSV fitxategia irakurri eta garbitu:
-     * - Komatxo arteko lerro-jauziak zuriune bihurtu
-     * - Komatxo arteko "" barne-komatxoak '' bihurtu
-     * - 5 zutabe ez dituzten errenkadak baztertu
-     * Fitxategi garbi berri bat itzultzen du.
+     * Emandako bideko CSV fitxategia irakurtzen du eta garbiketa-prozesu bat aplikatzen dio.
+     * Honako ekintza hauek burutzen ditu:
+     * <ul>
+     * <li>Komatxo arteko lerro-jauziak zuriune bihurtzen ditu, Weka-k ondo irakur dezan.</li>
+     * <li>Komatxo arteko "" barne-komatxoak '' (komatxo sinple) bihurtzen ditu.</li>
+     * <li>Bost zutabe ez dituzten errenkadak baztertzen ditu (formatu okerra dutelako).</li>
+     * <li>Twitterreko zarata garbitzen du testuetatik (URLak, @ aipamenak eta RT etiketak ezabatuz).</li>
+     * <li>{@code filterInvalidClasses} egia bada, gutxienez 5 agerpen ez dituzten klaseak baztertzen ditu.</li>
+     * </ul>
+     * Azkenik, aldi baterako fitxategi (temporary file) garbi bat sortu eta itzultzen du.
+     *
+     * @param path Garbitu behar den jatorrizko CSV fitxategiaren bidea (path-a).
+     * @param filterInvalidClasses {@code true} bada, 5 agerpen baino gutxiago dituzten sentimendu-klaseak iragaziko/ezabatuko ditu (normalean entrenamendu-datuetan soilik aktibatzen da).
+     * @return Garbitutako datuak dituen aldi baterako {@link java.io.File} fitxategi berria.
+     * @throws Exception Fitxategia irakurtzean edo idaztean Sarrera/Irteera (I/O) erroreren bat gertatzen bada.
      */
     public static File preprocessCSV(String path, boolean filterInvalidClasses) throws Exception {
         StringBuilder content = new StringBuilder();
@@ -69,6 +85,7 @@ public class CSVPreprocessor {
         File tmp = File.createTempFile("tweets_clean", ".csv");
         tmp.deleteOnExit();
         int good = 0, bad = 0;
+        
         // --- AURREKO PAUSOA: Klase sendoak dinamikoki detektatu ---
         // Hiztegi bat sortzen dugu sentimendu bakoitza zenbat aldiz errepikatzen den kontatzeko
         java.util.Map<String, Integer> classFrequencies = new java.util.HashMap<>();
@@ -118,6 +135,13 @@ public class CSVPreprocessor {
         return tmp;
     }
 
+    /**
+     * Karaktere-kateen (String) array bat jasotzen du eta CSV formatuko lerro baliodun bat sortzen du.
+     * Array-ko elementu bakoitza komatxo bikoitzen artean sartzen du eta komaz banatzen ditu.
+     *
+     * @param row CSV fitxategiko errenkada bat ordezkatzen duen String array-a (zutabeetako balioak).
+     * @return Errenkadaren testu-irudikapena, CSV formatu estandarrean (adibidez: "balioa1","balioa2").
+     */
     private static String toCsvLine(String[] row) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < row.length; i++) {

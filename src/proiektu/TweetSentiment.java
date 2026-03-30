@@ -6,17 +6,30 @@ import java.io.PrintStream;
 import weka.core.Instances;
 import weka.filters.MultiFilter;
 
+/**
+ * Proiektuaren klase nagusia (Main). Exekuzio-fluxu osoa koordinatzen du:
+ * datuak kargatu, garbitu, iragazkiak ezarri, eredu bat entrenatu eta ebaluatu, 
+ * eta azkenik, datu berrien gaineko iragarpenak egiten ditu.
+ * * @version 1.0
+ */
 public class TweetSentiment {
 
+    /**
+     * Aplikazioaren sarrera puntua. Esperimentuaren parametroak definitzen ditu,
+     * pipeline osoa exekutatzen du eta emaitzak txosten batean gordetzen ditu.
+     *
+     * @param args Komando-lerroko argumentuak. Hurrenez hurren jaso ditzake: 
+     * Train datuen bidea, Test datuen bidea, Iragarpenen irteera bidea eta Txostenaren (log) bidea.
+     */
     public static void main(String[] args) {
         // --- Experimentatzeko balioak ---
         boolean stemmerErabili  = true;
-        boolean stopWordsErabili = false;
+        boolean stopWordsErabili = true;
         boolean bigramakErabili = true;
-        int hiztegiTamaina = 1500;          
-        boolean atributuakOptimizatu = true;
-        int azkenAtributuKopurua = 700;    
-        boolean datuakOrekatzeko = true;    
+        int hiztegiTamaina = 1000;          
+        boolean atributuakOptimizatu = false;
+        int azkenAtributuKopurua = 300;    
+        boolean datuakOrekatzeko = false;    
         // --------------------------------------------------
 
         String csvPath = "data/tweetSentiment.train.csv";

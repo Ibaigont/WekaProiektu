@@ -8,8 +8,22 @@ import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Remove;
 import java.io.File;
 
+/**
+ * Datu-multzoen karga eta kudeaketa egiten duen klasea.
+ * CSV fitxategiak irakurtzen ditu, egitura egokitzen du (behar ez diren zutabeak kenduz)
+ * eta Weka-ren {@link Instances} formatura pasatzen ditu.
+ * * @version 1.0
+ */
 public class DatasetManager {
 
+    /**
+     * Garbitutako CSV fitxategi bat kargatzen du eta entrenamendurako prestatzen du.
+     * TweetId eta TweetDate zutabeak kentzen ditu, eta 'Sentiment' zutabea klase-helburu gisa ezartzen du.
+     *
+     * @param cleanFile Aurretik garbitu den CSV fitxategia.
+     * @return Entrenamendurako prest dauden datuak dituen {@link Instances} objektua.
+     * @throws Exception Fitxategia irakurtzean edo atributuak kentzean erroreren bat gertatzen bada.
+     */
     public static Instances loadTrainData(File cleanFile) throws Exception {
         CSVLoader loader = new CSVLoader();
         loader.setStringAttributes("5"); // Tweetak String gisa irakurtzera behartzen du
@@ -27,6 +41,15 @@ public class DatasetManager {
         return filteredData;
     }
 
+    /**
+     * Test-datuak kargatzen ditu eta entrenamendu-datuen egitura bera izan dezaten behartzen ditu.
+     * Ezinbestekoa da eredua ondo aplikatzeko Test eta Train multzoek atributu berdinak izatea.
+     *
+     * @param cleanTestFile Aurretik garbitu den Test CSV fitxategia.
+     * @param trainStructure Entrenamendu-datuen egitura (erreferentzia gisa erabiltzeko).
+     * @return Test-datuak dituen eta entrenamenduaren egitura bera duen {@link Instances} objektua.
+     * @throws Exception Fitxategia kargatzean edo instantziak berreraikitzean erroreren bat gertatzen bada.
+     */
     public static Instances buildTestData(File cleanTestFile, Instances trainStructure) throws Exception {
         CSVLoader testLoader = new CSVLoader();
         testLoader.setStringAttributes("5");

@@ -8,11 +8,28 @@ import weka.filters.MultiFilter;
 import java.util.Random;
 import java.io.FileWriter;
 
+/**
+ * Ikaskuntza automatikoko (Machine Learning) eredua kudeatzeaz arduratzen den klasea.
+ * Ereduaren entrenamendua, hiperparametroen (C) bilaketa, ebaluazioa eta iragarpenak egitea ahalbidetzen du.
+ * * @version 1.0
+ */
 public class ModelManager {
-    // KONTUZ HEMEN: Orain ez da SMO bat gordetzen, FilteredClassifier bat baizik
+    
+    /**
+     * Aurkitutako eredu optimoa gordetzen duen atributua. 
+     * Iragazkiak (MultiFilter) eta sailkatzailea (SMO) uztartzen ditu.
+     */
     private FilteredClassifier bestModel;
 
-    // Funtzioak datu gordinak eta iragazkien paketea jasotzen ditu
+    /**
+     * Eredua entrenatzen du eta Cross-Validation bidez ebaluatzen du.
+     * Hainbat C parametro probatzen ditu SMO sailkatzailearentzat (Support Vector Machine)
+     * eta F-Measure onena lortzen duena gordetzen du eredu final gisa.
+     *
+     * @param trainDataRaw Entrenamendurako datu gordinak dituen {@link Instances} objektua.
+     * @param multiFilter Testu-eraldaketa egingo duen {@link MultiFilter} iragazkia.
+     * @throws Exception Entrenamenduan edo ebaluazioan erroreren bat gertatzen bada.
+     */
     public void trainAndEvaluate(Instances trainDataRaw, MultiFilter multiFilter) throws Exception {
         System.out.println("\n========== 5 & 6. FASEAK: FILTERED CLASSIFIER EBALUAZIOA ==========");
         double[] cValues = {0.1, 1.0, 5.0};
@@ -64,6 +81,15 @@ public class ModelManager {
         bestModel.buildClassifier(trainDataRaw);
     }
 
+    /**
+     * Test datuen gainean iragarpenak egiten ditu eta emaitzak fitxategi batean gordetzen ditu.
+     * Ebaluazioaren emaitzak ere kontsolan inprimitzen ditu.
+     *
+     * @param testDataRaw Test-datu gordinak dituen {@link Instances} objektua.
+     * @param trainDataRaw Entrenamendu-datu gordinak (ebaluatzailea hasieratzeko erabilia).
+     * @param outputPath Iragarpenak idatziko diren .txt fitxategiaren bidea.
+     * @throws Exception Iragarpenean edo fitxategia idaztean erroreren bat gertatzen bada.
+     */
     public void testAndPredict(Instances testDataRaw, Instances trainDataRaw, String outputPath) throws Exception {
         Evaluation evalTest = new Evaluation(trainDataRaw);
         // Test datu gordinak pasatzen ditugu! bestModel-ek bere barruan dituen iragazkiak aplikatuko dizkie bere kabuz
