@@ -50,6 +50,16 @@ Proiektu honen helburu nagusia Testu Meatzaritzako (Text Mining) teknikak aplika
 Testu-sailkapenak berezko erronkak ditu, hala nola dimentsionalitate handia, hizkera informala, zarata (estekak, aipamenak) eta klaseen arteko desoreka. Arazo horiei aurre egiteko, txosten honek datuen aurreprozesamendu zehatz bat, bektorizazio-teknikak (TF-IDF), atributuen hautapena (InfoGain) eta Support Vector Machine (SMO) algoritmoan oinarritutako sailkatzaile baten doikuntza aurkezten ditu. Prozesu osoa Datuen Zientziaren metodologia zorrotz bat jarraituz garatu da, erabaki guztiak ebidentzia esperimentaletan oinarrituz.
 \newpage
 % -------------------------------------------------------------------
+\section{Sailkatzailearen funtzionamendua: SVM (SMO)}
+Proiektu honetan Support Vector Machine (SVM) algoritmoa aukeratu dugu txioen sentimendu-analisia garatzeko. Gure inplementazioan, algoritmo honen aldaera optimizatu bat erabili da: WEKAk eskaintzen duen SMO (Sequential Minimal Optimization). Nahiz eta testuen sailkapen automatikoak erronka konplexuak izan, SVM algorimoaren oinarri kontzeptuala nahiko naturala da.
+
+Matematikoki, gure datu-multzoko txio bakoitza puntu bat bezala irudika dezakegu espazio bektorial batean. Bektorizazio prozesuaren ondoren, testuko hitz esanguratsu bakoitzak dimentsio bat sortzen du; beraz, milaka dimentsio dituen espazio batez ari gara. Testuinguru honetan, SVM algoritmoaren helburua espazio horretan kategoria ezberdinak (positiboa, negatiboa, neutroa edo irrelebantea) bereiziko dituen muga optimo bat —hiperplano bat— aurkitzea da. 
+
+Hiperplano hori ez da ausaz kalkulatzen: algoritmoak marjina maximizatzea bilatzen du. Hau da, mugaren eta klase bakoitzeko gertuen dauden puntuen arteko distantzia ahalik eta handiena izan dadin saiatzen da. Muga hori zehazten eta finkatzen duten datuei "euskarri-bektore" (\textit{support vectors}) esaten zaie. 
+
+Gure proiektuan, testu-meatzaritzak sortzen duen dimentsionalitate handia (\textit{High Dimensionality}) arazo larria izan ohi da beste algoritmo batzuentzat. Hala ere, SMO inplementazioak egoera hori ezin hobeto kudeatzen du: optimizazio-kalkulu konplexuak azpi-arazo txikiagotan zatitzen ditu, prozesu osoa azkartuz eta dimentsio altuetan errendimendua mantenduz. Behin eredua entrenatuta dagoenean, txio ezezagun berri bat jasotzean berehala kalkulatzen du hiperplanoaren zein aldetan erortzen den, automatikoki dagokion sentimendu-etiketa esleituz.
+\newpage
+% -------------------------------------------------------------------
 \section{Datu-sortaren analisia}
 Eredu bat entrenatzen hasi aurretik, ezinbestekoa da inferentziarako erabiliko diren datuak ezagutzea eta kuantitatiboki karakterizatzea.
 
