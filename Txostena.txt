@@ -29,7 +29,7 @@ Txosten honek Twitterreko mezuen (txioen) sentimendu-analisia egiteko garatutako
 Proiektuaren garapena hainbat modulu independentetan egituratu da, kodearen berrerabilpena eta probak errazteko. Jarraian, modulu bakoitzaren espezifikazioa deskribatzen da:
 
 \subsection{Datuen Aurreprozesamendua (\texttt{CSVPreprocessor} eta \texttt{DatasetManager})}
-Hasierako datu-multzoek formatu akatsak eta zarata (URLak, @ aipamenak, RT etiketak) zituzten. \texttt{CSVPreprocessor} klasearen bitartez, fitxategiak garbitu dira: komatxo arteko lerro-jauziak zuzendu eta Twitterreko egitura bereziak ezabatu dira. Entrenamendu-fasean (Train), maiztasun oso txikiko klaseak (5 agerpen baino gutxiagoko "klase fantasmak") dinamikoki detektatu eta baztertu dira eredua ez nahasteko. \texttt{DatasetManager}-ak atributu irrelebanteak (TweetId, TweetDate) kendu eta 'Sentiment' zutabea klase-helburu (Class Index) gisa finkatu du.
+Hasierako datu-multzoek formatu akatsak eta zatarra (URLak, @ aipamenak, RT etiketak) zituzten. \texttt{CSVPreprocessor} klasearen bitartez, fitxategiak garbitu dira: komatxo arteko lerro-jauziak zuzendu eta Twitterreko egitura bereziak ezabatu dira. Entrenamendu-fasean (Train), maiztasun oso txikiko klaseak (5 agerpen baino gutxiagoko "klase fantasmak") detektatu eta baztertu dira eredua ez nahasteko. \texttt{DatasetManager}-ak atributu irrelebanteak (TweetId, TweetDate) kendu eta 'Sentiment' zutabea klase-helburu (Class Index) gisa finkatu du.
 
 \subsection{Iragazkien Katea - Pipeline (\texttt{TextPipeline})}
 Testu laua algoritmoek uler dezaketen formatu numeriko bihurtzeko, \texttt{MultiFilter} bat konfiguratu da honako iragazki hauekin:
@@ -44,48 +44,55 @@ Sailkatzaile gisa Weka-ren \texttt{SMO} (Support Vector Machine) erabili da, dat
 
 \section{Emaitza Esperimentalak}
 
-Hainbat konfigurazio probatu ondoren, parametroen bilaketak $C=0.1$ balioa identifikatu du optimo gisa oinarrizko ereduan. Gerora, parametroen doikuntza finago bat egin da (Stemmer=True, StopWords=False, Bigrams=True, AttributeSelection=300, Resample=True), zeinak emaitzak hobetu dituen.
+Hainbat konfigurazio probatu dira iragazkien pipeline-an, parametroen aldaketak ereduaren ikaskuntzan eta orokortze-gaitasunean duen eragina neurtzeko. Entrenamendurako Weka-ren \texttt{SMO} sailkatzailea erabili da beti (Cross-Validation bidez C parametroa optimizatuz), eta ondoren Test datuetan (Dev CSV) ebaluatu da. Jarraian, egindako 5 froga nagusiak aztertzen dira:
 
 \begin{table}[H]
 \centering
-\caption{Emaitza Globalen Konparaketa (Test multzoa - Dev CSV)}
+\caption{Esperimentuen laburpena Test datuetan (Dev CSV)}
 \vspace{0.2cm}
-\begin{tabular}{l c c c c}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l c c c c c c c c}
 \toprule
-\textbf{Eredua / Konfigurazioa} & \textbf{Accuracy} & \textbf{F-Measure} & \textbf{Asmatuak} & \textbf{Hutsak} \\
+\textbf{Froga} & \textbf{Hiztegia} & \textbf{Optimizazioa} & \textbf{StopWords} & \textbf{Orekatzea} & \textbf{Best C} & \textbf{Accuracy} & \textbf{F-Measure} & \textbf{Asmatuak / Hutsak} \\
 \midrule
-Oinarrizko SMO ($C=0.1$) & \%66.33 & 0.664 & 327 & 166 \\
-SMO Optimizatua (AttrSel + Resample) & \textbf{\%67.34} & \textbf{0.662} & \textbf{332} & \textbf{161} \\
+1. Froga & 1000 & 300 & Ez & Bai & 0.1 & \%66.33 & 0.664 & 327 / 166 \\
+2. Froga & 3000 & 1000 & Ez & Bai & 0.1 & \textbf{\%66.73} & \textbf{0.670} & 329 / 164 \\
+3. Froga & 1000 & 500 & Bai & Bai & 1.0 & \%60.04 & 0.613 & 296 / 197 \\
+4. Froga & 5000 & 2000 & Bai & Bai & 0.1 & \%55.98 & 0.560 & 276 / 217 \\
+5. Froga & 1000 & Ez & Bai & Ez & 1.0 & \%67.34 & 0.637 & 332 / 161 \\
 \bottomrule
 \end{tabular}
+}
 \end{table}
 
-\begin{table}[H]
-\centering
-\caption{Klaseko Xehetasunak (Eredu Optimizatua)}
-\vspace{0.2cm}
-\begin{tabular}{l c c c}
-\toprule
-\textbf{Klasea} & \textbf{Precision} & \textbf{Recall} & \textbf{F-Measure} \\
-\midrule
-Negative & 0.706 & 0.194 & 0.304 \\
-Positive & 0.447 & 0.224 & 0.299 \\
-Neutral & 0.612 & 0.654 & 0.633 \\
-Irrelevant & 0.771 & 0.941 & 0.847 \\
-\midrule
-\textbf{Batez besteko Haztatua} & \textbf{0.700} & \textbf{0.673} & \textbf{0.662} \\
-\bottomrule
-\end{tabular}
-\end{table}
+\subsection{Froga bakoitzaren azterketa eta zergatiak}
+
+\begin{itemize}
+    \item \textbf{1. Froga (Oinarri orekatua):} \textit{Stemming=Bai, StopWords=Ez, Hiztegia=1000, Atributu Hautaketa=300, Orekatzea=Bai}.\\
+    Emaitza sendoak lortu dira (\%66.33 Zehaztasuna, 0.664 F-Measure). Datuen orekatzeak (Resample) asko lagundu du klase minoritarioak (\textit{Positive} eta \textit{Negative}) detektatzen, ereduak pisu gehiago ematen baitie entrenamenduan.
+    
+    \item \textbf{2. Froga (Hiztegi zabalagoa):} \textit{StopWords=Ez, Hiztegia=3000, Atributu Hautaketa=1000, Orekatzea=Bai}.\\
+    Hau da \textbf{emaitzarik orekatuena eta onena} F-Measure balioari dagokionez (0.670). Hitz kopuru handiagoa mantentzeak eta 1000 atributu garrantzitsuenak aukeratzeak testuinguru semantiko aberatsagoa eman dio ereduari.
+    
+    \item \textbf{3. Froga (StopWords iragazkia aktibatuta):} \textit{StopWords=Bai, Hiztegia=1000, Atributu Hautaketa=500, Orekatzea=Bai}.\\
+    Zehaztasunak \%60.04-ra egin du behera. \textbf{Zergatia:} Twitter bezalako sare sozialetan, mezuak oso laburrak dira. Esanahirik gabeko hitz arruntak (\textit{StopWords}) kentzean, askotan ezezkoak (adibidez, "ez") edo kutsu emozionala ematen duten egiturak galtzen dira, sentimenduaren analisia zailduz.
+    
+    \item \textbf{4. Froga (Dimentsionalitate altua eta StopWords):} \textit{StopWords=Bai, Hiztegia=5000, Atributu Hautaketa=2000, Orekatzea=Bai}.\\
+    Emaitzarik okerrena lortu da (\%55.98). \textbf{Zergatia:} \textit{StopWords}-ak ezabatzeaz gain, hiztegi oso handia mantendu da. Honek zarata izugarria sartu du ereduan, dimentsionalitatearen madarikazioa (Curse of Dimensionality) eraginez. Gainera, entrenamenduan \%63 lortu da eta testean \%55; nabaria da \textit{Overfitting}-a gertatu dela.
+    
+    \item \textbf{5. Froga (Orekatzerik eta Optimizaziorik gabe):} \textit{StopWords=Bai, Hiztegia=1000, Atributu Hautaketa=Ez, Orekatzea=Ez}.\\
+    Zehaztasuna altuena da (\%67.34), baina F-Measure balioak behera egin du (0.637). \textbf{Zergatia:} Datuak desorekatuta daudenez, ereduak klase nagusiak (\textit{Neutral} eta \textit{Irrelevant}) besterik ez ditu asmatzen. Esaterako, klase \textit{Negative}-an Asmatze-tasa (Recall) \%19.4koa besterik ez da. Hau da, ereduak engainatu egiten gaitu: orokorrean asmatzen du asko dauden klaseetan beti gauza bera erantzuten duelako, baina ez da erabilgarria sentimendu positibo/negatiboak aurkitzeko.
+\end{itemize}
 
 \section{Diskusio Kritikoa}
 
-Lortutako datu esperimentalek proiektuan hartutako hainbat erabaki tekniko babesten dituzte, eta ereduan dauden indarguneak zein ahuleziak azaleratzen dituzte:
+Lortutako datu esperimentalek proiektuan hartutako erabaki teknikoak sakonki babesten dituzte:
 
 \begin{itemize}
-    \item \textbf{Overfitting-aren eza:} Entrenamendu faseko zehaztasuna (Accuracy: \%65.85) eta ebaluazio/test fasekoa (\%66.33 - \%67.34) oso antzekoak dira. Horrek argi erakusten du eredua ez dela datuak memorizatzen ari, baizik eta eredu orokor bat ikasi duela. \texttt{AttributeSelection} erabiltzeak eta hitz-kopurua mugatzeak nabarmen lagundu dute gainegokitze hori ekiditen.
-    \item \textbf{Datuen desoreka (Imbalanced Data):} 2. Taulan ikus daitekeen bezala, \textit{Irrelevant} eta \textit{Neutral} klaseek F-Measure altua lortzen dute (0.847 eta 0.633 hurrenez hurren). Aldiz, \textit{Positive} eta \textit{Negative} klaseek emaitza apalagoak dituzte. Datu-multzoan klase horien lagin gutxiago egotea da arrazoi nagusia. Hori konpontzen saiatzeko \texttt{Resample} iragazkia erabili den arren (datuak \%150era orekatuz), argi geratzen da testuinguru semantiko konplexuak (ironia, hiztegi anbibalentea) sailkatzeko zailagoak direla lagin txikiekin.
-    \item \textbf{StopWords eta Stemming-aren eragina:} Hasierako probetan StopWords-ak kentzeak errendimendua jaitsi zuela ohartu gara. Twitter bezalako sare sozialetan, mezuak oso laburrak dira eta preposizioek zein izenordainek sarritan kutsu emozionala ematen dute. Lovins Stemmer-a erabiltzeak, ordea, hitz-erroak bateratuz hiztegiaren dimentsionalitatea murrizten eta eredua sendotzen lagundu du, proba optimizatuetan lortutako \%67.34ko zehaztasunak erakusten duen bezala.
+    \item \textbf{Datuen desoreka eta errealitatearen ispilua:} 5. frogak argi erakutsi du klaseen desorekak (\textit{Imbalanced Data}) engainagarria den \textit{Accuracy} altu bat eman dezakeela. \texttt{Resample} iragazkia erabiltzea (1. eta 2. frogak) ezinbestekoa da eredua baliagarria izan dadin eta klase minoritarioak (txio positiboak eta negatiboak) iragar ditzan. Testuinguru errealetan, gutxiengoa den sentimendua detektatzea izaten da balio handiena duena.
+    
+    \item \textbf{Zarataren kudeaketa eta StopWords:} Kontraesankorra badirudi ere, 3. eta 4. frogetan ikusi da mezu laburretan \textit{StopWords}-ak kentzea kaltegarria dela. Testu luzeetan ohikoa den prozesu honek (artikuluetan edo liburuetan), Twitterren egitura gramatikal informalak suntsitzen ditu. Hitz-erroak lortzea (\textit{Stemming}) eta informazio gehien duten N atributu onenak hautatzea (\textit{InfoGain}) nahikoa da eredua sendotzeko informazio baliagarria ezabatu gabe.
+    
+    \item \textbf{Ereduaren Orokortzea:} 2. Frogan zehaztutako konfigurazio optimoak erakusten du eredua gai dela entrenamendu-datuetatik ikasteko (Cross-Validation-en \%66.65) eta Test-datu ezezagunetan ia zehaztasun bera mantentzeko (\%66.73). Honek ziurtatzen du diseinatutako \textit{pipeline}-a sendoa dela eta ez duela \textit{overfitting}-ik pairatzen parametro egokiak (Atributu-hautaketa eta SMO-ren C kontrolatua) ezartzen direnean.
 \end{itemize}
-
 \end{document}
