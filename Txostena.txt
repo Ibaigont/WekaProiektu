@@ -1,7 +1,6 @@
 \documentclass[12pt,a4paper]{article}
 
 % --- Paketeak ---
-
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[basque]{babel}
@@ -11,12 +10,24 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{float}
+\usepackage{amsmath}
+\usepackage{fancyhdr}
 
+\pagestyle{fancy}
+\fancyhf{}
+
+\fancyfoot[C]{\thepage}                              % Número de página arriba
+\fancyhead[L]{Erabakiak Hartzeko Euskarri Sistemak}  % Pie izquierda
+\fancyhead[R]{Tweet Sentiment -- SMO}             % Pie derecha
+
+% Opcional: grosor de las líneas decorativas
+\renewcommand{\headrulewidth}{0.4pt}  % Línea bajo el header
+\renewcommand{\footrulewidth}{0.4pt}  % Línea sobre el footer
 % --- Izenburua ---
-
 \title{
     \includegraphics[width=0.4\textwidth]{weka.jpg} \\[1cm]
     \textbf{Txosten Zientifiko-Teknikoa} \\ 
+    
     \large Txioen Sentimendu Analisia Ikaskuntza Automatikoz
 }
 \author{Asier Fernández Beraza, Ibai González Tejedor, Markel Valle Vivanco} % 
@@ -24,88 +35,269 @@
 
 \begin{document}
 
-
 \maketitle
+\vspace{1cm}
 \newpage
 
 \renewcommand{\contentsname}{Aurkibidea}
 \tableofcontents
 \newpage
 
+% -------------------------------------------------------------------
+\section{Sarrera}
+Proiektu honen helburu nagusia Testu Meatzaritzako (Text Mining) teknikak aplikatzea da, Twitter sare sozialeko mezuen (txioen) sentimendu-analisia egiteko. Zehazki, helburua da mezu labur horiek aztertzea eta beren kutsu emozionalaren arabera lau klasetan sailkatzea: \textit{positive}, \textit{negative}, \textit{neutral} eta \textit{irrelevant}.
 
-\section{Laburpena}
-Txosten honek Twitterreko mezuen (txioen) sentimendu-analisia egiteko garatutako ikaskuntza automatikoko (Machine Learning) prozesua deskribatzen du. Datuen garbiketa, bektorizazioa, iragazkien pipeline-a eta eredu optimoaren aukeraketa (Support Vector Machine - SMO) zehazten dira. Azkenik, lortutako emaitza esperimentalak taularatzen dira eta egindako hautuen inguruko diskusio kritikoa aurkezten da.
+Testu-sailkapenak berezko erronkak ditu, hala nola dimentsionalitate handia, hizkera informala, zarata (estekak, aipamenak) eta klaseen arteko desoreka. Arazo horiei aurre egiteko, txosten honek datuen aurreprozesamendu zehatz bat, bektorizazio-teknikak (TF-IDF), atributuen hautapena (InfoGain) eta Support Vector Machine (SMO) algoritmoan oinarritutako sailkatzaile baten doikuntza aurkezten ditu. Prozesu osoa Datuen Zientziaren metodologia zorrotz bat jarraituz garatu da, erabaki guztiak ebidentzia esperimentaletan oinarrituz.
+\newpage
+% -------------------------------------------------------------------
+\section{Datu-sortaren analisia}
+Eredu bat entrenatzen hasi aurretik, ezinbestekoa da inferentziarako erabiliko diren datuak ezagutzea eta kuantitatiboki karakterizatzea.
 
+\subsection{Datu gordinen jatorria eta deskribapena}
+Proiektu honetan erabilitako datu-multzoa \textbf{Sanders-Twitter Sentiment Corpus} (0.2 bertsioa) da, Niek J. Sanders-ek 2011ko urrian sortutakoa. Corpus hau bereziki diseinatuta dago Twitterreko sentimendu-analisiko algoritmoak entrenatu eta testatzeko.
 
-\section{Atazen Espezifikazio Teknikoa}
-
-Proiektuaren garapena hainbat modulu independentetan egituratu da, kodearen berrerabilpena eta probak errazteko. Jarraian, modulu bakoitzaren espezifikazioa deskribatzen da:
-
-\subsection{Datuen Aurreprozesamendua (\texttt{CSVPreprocessor} eta \texttt{DatasetManager})}
-Hasierako datu-multzoek formatu akatsak eta zatarra (URLak, @ aipamenak, RT etiketak) zituzten. \texttt{CSVPreprocessor} klasearen bitartez, fitxategiak garbitu dira: komatxo arteko lerro-jauziak zuzendu eta Twitterreko egitura bereziak ezabatu dira. Entrenamendu-fasean (Train), maiztasun oso txikiko klaseak (5 agerpen baino gutxiagoko "klase fantasmak") detektatu eta baztertu dira eredua ez nahasteko. \texttt{DatasetManager}-ak atributu irrelebanteak (TweetId, TweetDate) kendu eta 'Sentiment' zutabea klase-helburu (Class Index) gisa finkatu du.
-
-\subsection{Iragazkien Katea - Pipeline (\texttt{TextPipeline})}
-Testu laua algoritmoek uler dezaketen formatu numeriko bihurtzeko, \texttt{MultiFilter} bat konfiguratu da honako iragazki hauekin:
+Hasierako datu-multzoak eskuz sailkatutako \textbf{5.513 txio} biltzen ditu. Txio bakoitzak honako informazio edo atributu hauek ditu jatorrian:
 \begin{itemize}
-    \item \textbf{StringToWordVector}: TF-IDF eraldaketa erabili da. Bektorizazioan lematizazioa (Lovins Stemmer) eta N-gramak (1-2 hitzeko konbinazioak) aktibatu dira, testuingurua hobeto jasotzeko.
-    \item \textbf{AttributeSelection}: Dimentsionalitatea murrizteko, Informazio-Irabazia (InfoGain) ebaluatzailea erabili da, informazio gehien ematen duten 300 atributu onenak soilik mantenduz.
-    \item \textbf{Resample}: Klaseen arteko desoreka arintzeko, Oversampling teknika aplikatu da entrenamenduko datuetan.
+    \item \textbf{Tweet id}: Txioaren identifikatzaile bakarra.
+    \item \textbf{Tweet text}: Txioaren mezuaren testu gordina.
+    \item \textbf{Tweet creation date}: Txioa idatzi zen data.
+    \item \textbf{Topic}: Sentimendua zehazteko erabilitako gaia edo testuingurua.
+    \item \textbf{Sentiment label}: Txioaren klasea. Lau balio har ditzake: \textit{positive} (positiboa), \textit{neutral} (neutroa), \textit{negative} (negatiboa) edo \textit{irrelevant} (irrelebantea).
 \end{itemize}
 
-\subsection{Ereduaren Entrenamendua (\texttt{ModelManager})}
-Sailkatzaile gisa Weka-ren \texttt{SMO} (Support Vector Machine) erabili da, datu testualekin emaitza bikainak eman ohi dituelako. Eredua \texttt{FilteredClassifier} baten barruan sartu da, Test datuei iragazkiak era automatikoan eta gardenean aplikatzeko. Hiperparametroen optimizazioa egin da, $C \in \{0.1, 1.0, 5.0\}$ balioak ebaluatuz 10-fold Cross-Validation bitartez.
+Datuak teknologiarekin lotutako lau gai (topic) nagusiren inguruan bildu ziren, bilaketa-termino espezifikoak erabiliz. Hona hemen gaikako banaketa zehatza:
+\begin{itemize}
+    \item \textbf{Apple} (\texttt{@apple} bilaketa erabiliz): 191 positibo, 581 neutro, 377 negatibo eta 164 irrelebante.
+    \item \textbf{Google} (\texttt{\#google} bilaketa erabiliz): 218 positibo, 604 neutro, 61 negatibo eta 498 irrelebante.
+    \item \textbf{Microsoft} (\texttt{\#microsoft} bilaketa erabiliz): 93 positibo, 671 neutro, 138 negatibo eta 513 irrelebante.
+    \item \textbf{Twitter} (\texttt{\#twitter} bilaketa erabiliz): 68 positibo, 647 neutro, 78 negatibo eta 611 irrelebante.
+\end{itemize}
 
-\section{Emaitza Esperimentalak}
+Aipatzekoa da sailkapen prozesu osoa ingelesa ondo menderatzen zuen estatubatuar batek egin zuela eskuz. Gure aurreprozesamenduan kontuan hartzeko datu garrantzitsu bat da bilaketak hizkuntza-iragazkirik gabe egin zirela; ondorioz, ingelesa ez den beste hizkuntza batzuetan idatzitako txio guztiak automatikoki \textit{irrelevant} gisa etiketatu ziren. Era berean, \texttt{@apple} kontua ofizialki Apple Inc. enpresarena ez den arren, bildutako txioak oso ondo bideratuta daude enpresa horren produktuen inguruko iritzietara.
 
-Hainbat konfigurazio probatu dira iragazkien pipeline-an, parametroen aldaketak ereduaren ikaskuntzan eta orokortze-gaitasunean duen eragina neurtzeko. Entrenamendurako Weka-ren \texttt{SMO} sailkatzailea erabili da beti (Cross-Validation bidez C parametroa optimizatuz), eta ondoren Test datuetan (Dev CSV) ebaluatu da. Jarraian, egindako 5 froga nagusiak aztertzen dira:
+\subsection{Entrenamendu-multzoaren karakterizazioa eta Klase-desoreka}
+Gure ereduaren inferentziarako, corpus horretatik abiatuta entrenamendu-multzo bat (\textit{tweetSentiment.train.csv}) kargatu da. Datu-multzo horrek garbiketa egin aurretik eta ostean \textbf{1.628 txio} baliodun ditu.
+
+Hasierako 5 atributuetatik, \texttt{TweetId} eta \texttt{TweetDate} ezabatu egin dira \texttt{DatasetManager} klasearen bidez, ez dakartelako informazio esanguratsurik. Beraz, eredura 3 atributu soilik iritsiko dira, \texttt{Sentiment} klase-helburu (Class Index) gisa finkatuta.
+
+Entrenamendu-multzoko klaseen banaketa honakoa da:
+\begin{itemize}
+    \item \textit{negative}: 168 instantzia (\%10.3)
+    \item \textit{positive}: 181 instantzia (\%11.1)
+    \item \textit{neutral}: 728 instantzia (\%44.7)
+    \item \textit{irrelevant}: 551 instantzia (\%33.9)
+\end{itemize}
+
+Datu-multzo honetan \textbf{klase-desoreka (imbalanced data)} oso nabarmena da. Sentimendu argia duten txioak (\textit{positive} eta \textit{negative}) instantzia guztien \%21,4 baino ez dira. Honek ereduaren alborapena (bias) ekar dezake klase nagusietarantz (\textit{neutral} eta \textit{irrelevant}), iragarpen-tasa orokorrak (\textit{Accuracy}) engainagarriak bihurtuz. Erronka honi aurre egiteko, gerora ikusiko den moduan, \textit{Oversampling} teknikak eta ebaluazio-metrika espezifikoak erabili dira.
+\newpage
+% -------------------------------------------------------------------
+\section{Aurreprozesamendua eta Garbiketa}
+Twitterreko mezuak formatu askekoak dira, hizkera oso informala dute eta algoritmoentzat ulertezinak diren karaktere ugari dituzte. \texttt{CSVPreprocessor} klasearen bitartez ezinbesteko garbiketa burutu da sarrerako fitxategi gordinetan:
+
+\begin{enumerate}
+    \item \textbf{Formatuaren zuzenketa:} Jatorrizko CSV fitxategiek komatxo arteko lerro-jauziak zituzten (Weka-ren CSVLoader-ak erroreak ematen ditu honekin). Algoritmoak komatxo barruko testuak detektatu eta lerro-jauzi horiek zuriune bihurtzen ditu.
+    \item \textbf{Zarataren ezabaketa (Espresio Erregularrak - Regex):} Ereduak testuinguru semantikoa ikas dezan, edukirik ematen ez duten elementuak kendu dira:
+    \begin{itemize}
+        \item Estekak eta URL-ak (\texttt{http...}): Testuinguru aldagaitza dutenez ez dira esanguratsuak sentimendurako.
+        \item Erabiltzaileen aipamenak (\texttt{@erabiltzaile}): Izen propioak kendu dira sarearen egitura orokortzeko.
+        \item Retweet etiketak (\texttt{RT}): Zarata hutsa dira.
+    \end{itemize}
+    \item \textbf{Klase fantasmen iragazkia dinamikoa:} Batzuetan, formatu akatsen ondorioz, 1 edo 2 agerpen soilik dituzten "klase" faltsuak sortzen dira fitxategian. Entrenamendu multzoan 5 agerpen baino gutxiago dituzten klaseak ezabatu dira, Weka-ko ebaluatzaileak ez nahasteko. Prozesu honen bidez, 1628 instantzia on lortu dira eta 3 besterik ez dira baztertu.
+\end{enumerate}
+\newpage
+% -------------------------------------------------------------------
+\section{Datu-pipeline-a}
+
+Atal honetan, datuek jarraitzen duten fluxu sekuentziala deskribatzen da, CSV fitxategietako datu gordinetatik sentimendu-etiketak lortu arte. Sistema hau ``pipeline'' (hodi) arkitektura baten bidez diseinatu da, entrenamendu-multzoan aplikatutako transformazio berdinak test-multzoan (blind test) zehaztasun osoz errepikatzen direla bermatzeko.
+
+\subsection{Datu-ingesta eta Aurreprozesamendu Gordina (\texttt{CSVPreprocessor} klasea)}
+Lehen urratsa \texttt{tweetSentiment.train.csv} eta \texttt{tweetSentiment.dev.csv} fitxategiak irakurtzea da. Twitterreko datuen izaera zaratatsua dela eta, garbiketa prozesu bat aplikatzen da adierazpen erregularren (Regex) bidez:
+\begin{itemize}
+    \item \textbf{URLen normalizazioa:} Estekak ezabatu edo token generiko batengatik ordezkatzen dira, zarata saihesteko.
+    \item \textbf{Aipamenen kudeaketa (@user):} Erabiltzaile-izenak kentzen dira, ez baitute sentimenduari buruzko informazio semantikorik ematen.
+    \item \textbf{Tokenizazio oinarrizkoa:} Testua Wekako \texttt{Instances} objektuetan kargatzeko prestatzen da.
+\end{itemize}
+
+\subsection{Bektorizazioa eta Transformazioa (\texttt{StringToWordVector} iragazkia)}
+Algoritmoek ezin dutenez testu laua zuzenean prozesatu, datuak bektorizazio prozesu batetik igarotzen dira. \texttt{StringToWordVector} iragazkia erabili da konfigurazio honekin:
+\begin{itemize}
+    \item \textbf{TF-IDF (Term Frequency-Inverse Document Frequency):} \texttt{setNormalizeDocLength} eta \texttt{setOutputWordCounts} parametroak aktibatzen dira, hitz diskriminatzaileei pisu handiagoa emateko eta ohikoegiak direnei (informazio gutxikoak) pisua kentzeko.
+    \item \textbf{Stemming:} Hitzak haien erroetara murrizten dira (adibidez, ``itxaroten'', ``itxaron'' $\rightarrow$ ``itxar''), hiztegia optimizatzeko.
+\end{itemize}
+
+\subsection{Dimentsionalitatearen Murrizketa (Atributuen Hautapena)}
+Bektorizazioaren ondoren, atributu (hitz) kopurua oso handia da. SMO algoritmoaren errendimendua optimizatzeko, atributuen hautapena egiten da:
+\begin{itemize}
+    \item \textbf{Metrika:} \texttt{InfoGainAttributeEval} (Informazio Irabazia).
+    \item \textbf{Bilatzailea:} \texttt{Ranker}.
+    \item \textbf{Helburua:} Klasearekiko informazio gehien duten $N$ atributuak soilik mantentzen dira, garrantzirik gabeko hitzak ezabatuz.
+\end{itemize}
+
+\subsection{Sailkatzaile Integratua (\texttt{FilteredClassifier} eta SMO)}
+``Data leakage'' (datu-ihesa) saihesteko eta prozesuaren osotasuna ziurtatzeko, aurreprozesamendua eta \textbf{SMO (Support Vector Machine)} algoritmoa \texttt{FilteredClassifier} bakar batean kapsulatzen dira.
+\begin{itemize}
+    \item \textbf{Eredua:} SMO kernel polinimikoarekin.
+    \item \textbf{Konfigurazioa:} Konplexutasun parametroa $C=1.0$ gisa ezarri da (finketa edo \textit{fine-tuning} prozesuaren ondoren).
+    \item \textbf{Abantaila:} Iragazkiak ereduaren barruan daudenez, sailkatzaileak ``gogoratu'' egiten du entrenamenduko hiztegi zehatza test-multzoari aplikatzerakoan.
+\end{itemize}
+
+\subsection{Iragarpenen Irteera}
+Azkenik, fluxua amaitzeko, eredua test-multzo itsuari aplikatzen zaio. Emaitzak \texttt{iragarpenak.txt} fitxategian gordetzen dira, non lerro bakoitzak instantzia bakoitzari dagokion iragarpena erakusten duen (\texttt{positive}, \texttt{negative}, \texttt{neutral}, \texttt{irrelevant}).
+
+\begin{figure}[h]
+    \centering
+    \small
+    \begin{tabular}{|c|}
+    \hline
+    \textbf{Input:} Sanders CSV \\ \hline
+    $\downarrow$ \\ \hline
+    \textbf{Preprocessing:} Regex (URLs, @users, RT) \\ \hline
+    $\downarrow$ \\ \hline
+    \textbf{Vectorization:} StringToWordVector (TF-IDF, Stemming) \\ \hline
+    $\downarrow$ \\ \hline
+    \textbf{Selection:} InfoGainAttributeEval (Top 1000) \\ \hline
+    $\downarrow$ \\ \hline
+    \textbf{Classifier:} SMO (C=1.0) \\ \hline
+    $\downarrow$ \\ \hline
+    \textbf{Output:} iragarpenak.txt \\ \hline
+    \end{tabular}
+    \caption{Datuen pipeline-aren eskema sekuentziala.}
+\end{figure}
+\newpage
+% -------------------------------------------------------------------
+\section{Bektorizazioa eta Atributuen Hautapena}
+Ikaskuntza automatikoko algoritmoek (SMOak barne) zenbakiekin egiten dute lan, ez testu lauarekin. Horregatik, \texttt{TextPipeline} klasean iragazki-kate bat (MultiFilter) eraiki da eraldaketa hori egiteko.
+
+\subsection{Bektorizazio-metodoa: TF-IDF}
+Bektorizazio espaziorako \textbf{TF-IDF} (Term Frequency - Inverse Document Frequency) metodoa aukeratu da, BoW (Bag of Words) soilaren edo maiztasun hutsen (TF) ordez. TF-IDF-ak hitz arruntak penalizatzen ditu (dokumentu askotan agertzen direnak) eta esanguratsuak saritzen ditu (dokumentu gutxitan agertzen baina bertan maiztasun handia dutenak). Eredua zehatzagoa da horrela.
+
+Parametro espezifikoak honela finkatu dira \texttt{StringToWordVector} iragazkian:
+\begin{itemize}
+    \item \texttt{WordsToKeep}: Hiztegi-tamaina kontrolatzeko. Proba optimoan \textbf{3.000} baliotan finkatu da hitz esanguratsuak ez galtzeko.
+    \item \texttt{LowerCaseTokens = true}: Maiuskulak eta minuskulak berdintzeko (adib. "Bad" eta "bad" token bera izan daitezen).
+    \item \texttt{Tokenizer}: \texttt{NGramTokenizer} erabili da, 1 eta 2 hitzeko sekuentziak (\textit{Unigrams} eta \textit{Bigrams}) biltzeko. Ezezko esaldiak atzemateko funtsezkoa da ("not good" unigrama hutsekin "not" eta "good" gisa banatuko litzateke, jatorrizko sentimendua suntsituz).
+    \item \texttt{Stemmer}: \texttt{IteratedLovinsStemmer} erabili da hitzak beren errora lexikora murrizteko (adib. "running", "runs" $\rightarrow$ "run"). Horrek dimentsionalitatea jaisten du esanahia mantenduz.
+\end{itemize}
+
+\subsection{Atributuen Hautapena (Attribute Selection)}
+Bektorizazioaren ostean dimentsionalitatea izugarri hazten da. Karga konputazionala murrizteko eta gainegokitzeari (\textit{Overfitting}) aurre egiteko, \texttt{AttributeSelection} iragazkia aplikatu da. Ebaluatzaile gisa \texttt{InfoGainAttributeEval} erabili da (klaseari buruzko informazio-irabazi handiena duten atributuak neurtzen dituena), eta bilatzaile gisa \texttt{Ranker}. 
+
+Enuntziatuko eskakizunak betez (500 atributu baino gehiago), eta hainbat ekorketa egin ostean, \textbf{1.000 atributu garrantzitsuenak} mantentzea erabaki da eredu optimorako, txio laburren xehetasun lexikoak ez galtzeko.
+\newpage
+% -------------------------------------------------------------------
+\section{Test-blind Prozesua}
+Datu ezezagunekin (Test edo Dev multzoa) inferentzia egiterakoan ezinbestekoa da atributuen bateragarritasuna bermatzea. Ezin da test multzoko hiztegi berririk sortu, horrek \textit{Data Leakage} (datu isurketa) eragingo bailuke eta ebaluazioa partziala izango litzateke. Horretarako, bi teknika uztartu dira gure diseinuan:
+
+\begin{enumerate}
+    \item \textbf{Egituraren Berreraikuntza:} \texttt{DatasetManager.buildTestData} metodoak test-datuak kargatzen dituenean, entrenamendu-datuen egitura formala kopiatzera behartzen ditu (klase berdina eta jatorrizko atributu kopuru bera).
+    \item \textbf{FilteredClassifier:} Eredua bera Wekako \texttt{FilteredClassifier} baten barnean bildu da. Arkitektura honek bermatzen du \texttt{MultiFilter}-a (TF-IDF bektorizazioa eta InfoGain hautapena) \textbf{entrenamendu-multzoaren datuekin soilik} kalkulatzen eta izozten dela. Gero, test-multzoa ebaluatzeko unean, aurrez ikasitako eraldaketa hori era gardenean aplikatzen zaio testuari, datu ezezagunen integritatea blindatuz.
+\end{enumerate}
+\newpage
+% -------------------------------------------------------------------
+\section{Sailkatzailea: Support Vector Machine (SMO)}
+Testu-sailkapeneko problemen artean, Support Vector Machine (SVM) da historikoki emaitzarik onenak eman dituen ereduetako bat. Wekako inplementazioa (\texttt{SMO} - Sequential Minimal Optimization) erabili da proiektu honetan.
+
+\subsection{Oinarri teorikoa}
+SVM algoritmoak dimentsio anitzeko espazio bektorial batean lan egiten du (kasu honetan 1.000 dimentsioko espazioa, InfoGain-ek emandako atributu kopuruagatik). Bere helburua da klase ezberdinetako datu-puntuak bereiziko dituen \textbf{hiperplano optimo bat} aurkitzea. Hiperplano optimo hori klase bakoitzeko puntuetatik (euskarri-bektoreetatik edo \textit{support vectors}) ahalik eta urrunen dagoena da, hau da, \textbf{marjina maximizatzen} duena. SVM-ak bikain orokortzen du dimentsionalitate altuko egoeretan, beste algoritmoek (adibidez, k-NN edo Zuhaitzak) pairatzen duten "dimentsionalitatearen madarikazioa" (Curse of Dimensionality) ondo jasaten baitu.
+
+\subsection{Parametro sentikorrak eta Ekorketa (Fine-Tuning)}
+SMO sailkatzailearen parametro sentikorrena eta eragin handiena duena \textbf{C parametroa (Complexity edo Cost)} da.
+\begin{itemize}
+    \item \textbf{Interpretazio teorikoa:} C parametroak marjina-erroreen (\textit{misclassifications}) penalizazioa kontrolatzen du. 
+    \begin{itemize}
+        \item C balio \textbf{txiki} batek (adib. 0.01) marjina zabalagoa sortuko du, akats batzuk onartuz. Datu berrietara ondo orokortu dezake, baina balio txikiegia bada eredua sinpleegia geratuko da (\textit{Underfitting}).
+        \item C balio \textbf{handi} batek (adib. 5.0), aldiz, akatsak gogor penalizatzen ditu, entrenamendu-datuetara muga oso bihurriak doituz. Horrek entrenamenduan zehaztasun handia ematen du, baina datu berrien aurrean porrot egin dezake (\textit{Overfitting}).
+    \end{itemize}
+    \item \textbf{Ekorketa praktikoa:} $C \in \{0.1, 1.0, 5.0\}$ balioak ebaluatu dira, doikuntza automatizatu baten bitartez (Grid Search bezala \texttt{ModelManager} klasean).
+\end{itemize}
+\newpage
+% -------------------------------------------------------------------
+\section{Ebaluazio-metrikak}
+Optimizazio irizpide gisa \textbf{10-fold Cross-Validation} erabili da entrenamenduko datuekin eredu egonkorrena hautatzeko. Test-datuak azken baliozkotzerako bakarrik mantendu dira. 
+
+Datuetan genuen klase-desoreka (Imbalanced data) dela eta, irizpide nagusia ez da zehaztasun hutsa (\textit{Accuracy}) izan, baizik eta \textbf{Weighted F-Measure} (F-Neurri haztatua). 
+\begin{itemize}
+    \item \textit{Accuracy} hutsak engainatu egin gaitzake: eredu batek beti "neutral" erantzungo balu, datuen \%44 asmatuko luke ezer ikasi gabe.
+    \item \textit{F-Measure}-k Zehaztasuna (\textit{Precision}) eta Estaldura (\textit{Recall}) konbinatzen ditu batezbesteko harmoniko baten bidez, eta haztatua izatean, klase minoritarioen asmatze-tasari pisu errealagoa ematen dio, benetan eredu orekatu bat bilatuz.
+\end{itemize}
+\newpage
+% -------------------------------------------------------------------
+\section{Emaitza Esperimentalak eta Ereduaren Hautaketa}
+Hainbat konfigurazio probatu dira iragazkien pipeline-an (TF-IDF tamainak, StopWords, Atributu-hautaketa eta Resample). Jarraian, egindako 5 froga nagusiak aztertzen dira (Test / Dev datu ezezagunetan ebaluatuak, errealitateko portaera ikusteko):
 
 \begin{table}[H]
 \centering
 \caption{Esperimentuen laburpena Test datuetan (Dev CSV)}
 \vspace{0.2cm}
 \resizebox{\textwidth}{!}{
-\begin{tabular}{l c c c c c c c c}
+\begin{tabular}{l c c c c c c c}
 \toprule
-\textbf{Froga} & \textbf{Hiztegia} & \textbf{Optimizazioa} & \textbf{StopWords} & \textbf{Orekatzea} & \textbf{Best C} & \textbf{Accuracy} & \textbf{F-Measure} & \textbf{Asmatuak / Hutsak} \\
+\textbf{Froga konfigurazioa} & \textbf{Hiztegia} & \textbf{InfoGain (Atrb)} & \textbf{StopWords} & \textbf{Orekatzea} & \textbf{Best C} & \textbf{Accuracy} & \textbf{F-Measure} \\
 \midrule
-1. Froga & 1000 & 300 & Ez & Bai & 0.1 & \%66.33 & 0.664 & 327 / 166 \\
-2. Froga & 3000 & 1000 & Ez & Bai & 0.1 & \textbf{\%66.73} & \textbf{0.670} & 329 / 164 \\
-3. Froga & 1000 & 500 & Bai & Bai & 1.0 & \%60.04 & 0.613 & 296 / 197 \\
-4. Froga & 5000 & 2000 & Bai & Bai & 0.1 & \%55.98 & 0.560 & 276 / 217 \\
-5. Froga & 1000 & Ez & Bai & Ez & 1.0 & \%67.34 & 0.637 & 332 / 161 \\
+1. Froga (Oinarria) & 1000 & 300 atrb. & Ez & Bai (Resample) & 0.1 & \%66.33 & 0.664 \\
+\textbf{2. Froga (Optimoa)} & \textbf{3000} & \textbf{1000 atrb.} & \textbf{Ez} & \textbf{Bai (Resample)} & \textbf{1.0} & \textbf{\%66.73} & \textbf{0.670} \\
+3. Froga (StopWords On) & 1000 & 500 atrb. & Bai & Bai (Resample) & 1.0 & \%60.04 & 0.613 \\
+4. Froga (Curse Dim.) & 5000 & 2000 atrb. & Bai & Bai (Resample) & 0.1 & \%55.98 & 0.560 \\
+5. Froga (Desorekatua) & 1000 & Ez (Guztiak) & Bai & Ez & 1.0 & \%67.34 & 0.637 \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
-\subsection{Froga bakoitzaren azterketa eta zergatiak}
-
+\subsection{Emaitzen Diskusio Kritikoa}
+Datu esperimentalek hainbat ondorio garrantzitsu utzi dizkigute:
 \begin{itemize}
-    \item \textbf{1. Froga (Oinarri orekatua):} \textit{Stemming=Bai, StopWords=Ez, Hiztegia=1000, Atributu Hautaketa=300, Orekatzea=Bai}.\\
-    Emaitza sendoak lortu dira (\%66.33 Zehaztasuna, 0.664 F-Measure). Datuen orekatzeak (Resample) asko lagundu du klase minoritarioak (\textit{Positive} eta \textit{Negative}) detektatzen, ereduak pisu gehiago ematen baitie entrenamenduan.
-    
-    \item \textbf{2. Froga (Hiztegi zabalagoa):} \textit{StopWords=Ez, Hiztegia=3000, Atributu Hautaketa=1000, Orekatzea=Bai}.\\
-    Hau da \textbf{emaitzarik orekatuena eta onena} F-Measure balioari dagokionez (0.670). Hitz kopuru handiagoa mantentzeak eta 1000 atributu garrantzitsuenak aukeratzeak testuinguru semantiko aberatsagoa eman dio ereduari.
-    
-    \item \textbf{3. Froga (StopWords iragazkia aktibatuta):} \textit{StopWords=Bai, Hiztegia=1000, Atributu Hautaketa=500, Orekatzea=Bai}.\\
-    Zehaztasunak \%60.04-ra egin du behera. \textbf{Zergatia:} Twitter bezalako sare sozialetan, mezuak oso laburrak dira. Esanahirik gabeko hitz arruntak (\textit{StopWords}) kentzean, askotan ezezkoak (adibidez, "ez") edo kutsu emozionala ematen duten egiturak galtzen dira, sentimenduaren analisia zailduz.
-    
-    \item \textbf{4. Froga (Dimentsionalitate altua eta StopWords):} \textit{StopWords=Bai, Hiztegia=5000, Atributu Hautaketa=2000, Orekatzea=Bai}.\\
-    Emaitzarik okerrena lortu da (\%55.98). \textbf{Zergatia:} \textit{StopWords}-ak ezabatzeaz gain, hiztegi oso handia mantendu da. Honek zarata izugarria sartu du ereduan, dimentsionalitatearen madarikazioa (Curse of Dimensionality) eraginez. Gainera, entrenamenduan \%63 lortu da eta testean \%55; nabaria da \textit{Overfitting}-a gertatu dela.
-    
-    \item \textbf{5. Froga (Orekatzerik eta Optimizaziorik gabe):} \textit{StopWords=Bai, Hiztegia=1000, Atributu Hautaketa=Ez, Orekatzea=Ez}.\\
-    Zehaztasuna altuena da (\%67.34), baina F-Measure balioak behera egin du (0.637). \textbf{Zergatia:} Datuak desorekatuta daudenez, ereduak klase nagusiak (\textit{Neutral} eta \textit{Irrelevant}) besterik ez ditu asmatzen. Esaterako, klase \textit{Negative}-an Asmatze-tasa (Recall) \%19.4koa besterik ez da. Hau da, ereduak engainatu egiten gaitu: orokorrean asmatzen du asko dauden klaseetan beti gauza bera erantzuten duelako, baina ez da erabilgarria sentimendu positibo/negatiboak aurkitzeko.
+    \item \textbf{Zarataren kudeaketa eta StopWords (3. eta 4. frogak):} Testu akademikoetan ohikoa den arren, Twitterren \textit{StopWords}-ak kentzea kaltegarria dela ikusi da (F-Measure 0.670etik 0.613ra jaitsi da). Arrazoia argia da: mezu laburretan ezezkoak (adib. "not", "no") ezinbestekoak dira sentimendua ezagutzeko, eta StopWords zerrendetan egon ohi dira.
+    \item \textbf{Dimentsionalitatearen Madarikazioa (4. froga):} Atributu gehiegi mantentzeak (2000 atributu) errendimenduaren beherakada zorrotza ekarri du (\%55.98), ereduak zarata ikasi baitu eredu orokorren ordez.
+    \item \textbf{Desorekaren engainua (5. froga):} Datuak orekatu gabe (\textit{Oversampling} gabe) aztertzean \textit{Accuracy} altuena lortu da (\%67.34), baina \textit{F-Measure} okerragoa da (0.637). Eredu hori ez da erabilgarria, txio positiboak eta negatiboak asmatzeko gai ez delako (klase nagusien \% onak puztu egiten du batezbestekoa).
 \end{itemize}
 
-\section{Diskusio Kritikoa}
+Hori dela eta, \textbf{2. Froga finkatu da eredu optimo gisa}. 3000 hitzeko hiztegia 1000 atribututara murriztuta, hitz arruntak (StopWords) mantenduta eta klaseak Resample bidez orekatuta, SMO-k (C=1.0) F-Neurririk altuena eta fidagarriena lortu du (0.670).
+\newpage
+% -------------------------------------------------------------------
+\section{Eredu Optimoaren Kalitate Estimatua (Blind Test)}
 
-Lortutako datu esperimentalek proiektuan hartutako erabaki teknikoak sakonki babesten dituzte:
+2. Froga optimoarekin sortutako eredua Dev (Test) datu-multzo ezezagunaren gainean pasatzean lortutako konfusio-matrizeak xehetasun handiak ematen dizkigu:
 
+\begin{table}[H]
+\centering
+\caption{Eredu optimoaren konfusio-matrizea (Dev multzoa)}
+\vspace{0.2cm}
+\begin{tabular}{r | c c c c | l}
+\multicolumn{1}{c}{} & \textbf{Neg.} & \textbf{Pos.} & \textbf{Neut.} & \textbf{Irrel.} & \multicolumn{1}{c}{\textit{Real Class}} \\ \cline{2-5}
+\textbf{Neg.}   & 14 & 4  & 43  & 1  & (a) \\
+\textbf{Pos.}   & 3  & 8  & 36  & 0  & (b) \\
+\textbf{Neut.}  & 10 & 8  & 196 & 4  & (c) \\
+\textbf{Irrel.} & 7  & 3  & 58  & 98 & (d) \\ \cline{2-5}
+\end{tabular}
+\end{table}
+\textbf{Matrizearen analisia:}
+Ereduak gaitasun bikaina du txio neutroak eta irrelebanteak bereizteko (218tik 196 asmatu ditu neutroetan, eta 166tik 98 irrelebanteetan). Txio \textit{negative} eta \textit{positive}-en kasuan, instantzia asko neutro gisa sailkatzeko joera du oraindik (43 eta 36 errorez), gizakientzat ere askotan testuingururik gabe mezu labur baten sentimendua asmatzea zaila denaren adierazle. Hala ere, aurreko eredu sinpleen aldean hobekuntza nabarmena egon da asmatze tasetan klase minoritario hauetan.
+\newpage
+% -------------------------------------------------------------------
+\section{Diseinua eta Erabiltzailearen Paketea}
+
+Proiektuaren software arkitektura bi roletan banatu da datu-fluxu diagrama logiko baten arabera, malgutasuna eta eskalagarritasuna bermatzeko:
+
+\begin{enumerate}
+    \item \textbf{Pre-prozesamenduaren rola:} \texttt{CSVPreprocessor.java} eta \texttt{DatasetManager.java} klaseen bidez gertatzen da. Sarrerako CSV artxiboak (Train/Test) kargatu, garbitu, formatuak zuzendu eta Wekako \texttt{Instances} objektu bihurtzen dira.
+    \item \textbf{Entrenamendu eta Inferentziaren rola:} \texttt{TextPipeline.java}-k \texttt{MultiFilter} objektua sortzen du (iragazki guztiak bilduta). \texttt{ModelManager.java}-k Wekaren \texttt{FilteredClassifier} erabiltzen du iragazki hauek eredura (SMO) lotzeko, ebaluazioak (Cross-Validation) kudeatzeko eta predikzioak egiteko.
+\end{enumerate}
+
+\textbf{Erabiltzailearen Paketea (Iragarpenak):}
+Bezeroari \texttt{TweetSentiment.java} eskaintzen zaio script nagusi gisa. Terminaletik komando bakar baten bidez exekuta daiteke inongo interfaze grafikorik gabe (batch processing moduan). \texttt{args[]} bitartez Test fitxategia, Train fitxategia eta irteera (output) helbideak pasatzen zaizkio. Automatikoki datuak prozesatu (\textit{on-the-fly} bektorizazioa aplikatuz \texttt{FilteredClassifier} bidez) eta \texttt{iragarpenak.txt} fitxategia itzultzen du lerroz-lerro emaitzekin, erabiltzailearen esku-hartzerik gabe.
+\newpage
+% -------------------------------------------------------------------
+\section{Ondorioak}
+Proiektu honen bidez argi frogatu da testu meatzaritza ez dela soilik prozesu automatiko bat, baizik eta domeinuaren ezagutza sakona eskatzen duen zeregina. Sare sozialetako datuekin lan egiterakoan (Twitter), iragazki linguistiko klasikoak (hala nola StopWords-ak kentzea) kaltegarriak izan daitezkeela egiaztatu da. Horrez gain, klaseen desorekak ebaluazio metrika egokien beharra azpimarratzen du (Weighted F-Measure); izan ere, \textit{Accuracy} hutsak errealitatea ezkuta dezake.
+
+Diseinatutako soluzioa (TF-IDF + InfoGain + SMO) fidagarria da, datu isurketak (\textit{data leakage}) saihesten ditu, eta guztiz prest dago datu-olde berriak (batch bidez) prozesatzeko bezeroaren ingurunean.
+\newpage
+% -------------------------------------------------------------------
+\section{Erreferentziak}
 \begin{itemize}
-    \item \textbf{Datuen desoreka eta errealitatearen ispilua:} 5. frogak argi erakutsi du klaseen desorekak (\textit{Imbalanced Data}) engainagarria den \textit{Accuracy} altu bat eman dezakeela. \texttt{Resample} iragazkia erabiltzea (1. eta 2. frogak) ezinbestekoa da eredua baliagarria izan dadin eta klase minoritarioak (txio positiboak eta negatiboak) iragar ditzan. Testuinguru errealetan, gutxiengoa den sentimendua detektatzea izaten da balio handiena duena.
-    
-    \item \textbf{Zarataren kudeaketa eta StopWords:} Kontraesankorra badirudi ere, 3. eta 4. frogetan ikusi da mezu laburretan \textit{StopWords}-ak kentzea kaltegarria dela. Testu luzeetan ohikoa den prozesu honek (artikuluetan edo liburuetan), Twitterren egitura gramatikal informalak suntsitzen ditu. Hitz-erroak lortzea (\textit{Stemming}) eta informazio gehien duten N atributu onenak hautatzea (\textit{InfoGain}) nahikoa da eredua sendotzeko informazio baliagarria ezabatu gabe.
-    
-    \item \textbf{Ereduaren Orokortzea:} 2. Frogan zehaztutako konfigurazio optimoak erakusten du eredua gai dela entrenamendu-datuetatik ikasteko (Cross-Validation-en \%66.65) eta Test-datu ezezagunetan ia zehaztasun bera mantentzeko (\%66.73). Honek ziurtatzen du diseinatutako \textit{pipeline}-a sendoa dela eta ez duela \textit{overfitting}-ik pairatzen parametro egokiak (Atributu-hautaketa eta SMO-ren C kontrolatua) ezartzen direnean.
+    \item [1] Sanders, N. J. (2011). \textit{Sanders-Twitter Sentiment Corpus (v0.2)}. Sanders Analytics LLC.
+    \item [2] Witten, I. H., Frank, E., eta Hall, M. A. (2011). \textit{Data Mining: Practical Machine Learning Tools and Techniques}. Morgan Kaufmann.
+    \item [3] Weka (Waikato Environment for Knowledge Analysis) Dokumentazioa: \url{https://waikato.github.io/weka-wiki/}
 \end{itemize}
 \end{document}
