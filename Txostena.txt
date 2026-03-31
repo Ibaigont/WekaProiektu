@@ -1,6 +1,7 @@
 \documentclass[12pt,a4paper]{article}
 
 % --- Paketeak ---
+
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[basque]{babel}
@@ -12,17 +13,29 @@
 \usepackage{float}
 
 % --- Izenburua ---
-\title{\textbf{Txosten Zientifiko-Teknikoa}\\ \large Txioen Sentimendu Analisia Ikaskuntza Automatikoz}
-\author{Weka Proiektua}
+
+\title{
+    \includegraphics[width=0.4\textwidth]{weka.jpg} \\[1cm]
+    \textbf{Txosten Zientifiko-Teknikoa} \\ 
+    \large Txioen Sentimendu Analisia Ikaskuntza Automatikoz
+}
+\author{Asier Fernández Beraza, Ibai González Tejedor, Markel Valle Vivanco} % 
 \date{\today}
 
 \begin{document}
 
-\maketitle
 
-\begin{abstract}
+\maketitle
+\newpage
+
+\renewcommand{\contentsname}{Aurkibidea}
+\tableofcontents
+\newpage
+
+
+\section{Laburpena}
 Txosten honek Twitterreko mezuen (txioen) sentimendu-analisia egiteko garatutako ikaskuntza automatikoko (Machine Learning) prozesua deskribatzen du. Datuen garbiketa, bektorizazioa, iragazkien pipeline-a eta eredu optimoaren aukeraketa (Support Vector Machine - SMO) zehazten dira. Azkenik, lortutako emaitza esperimentalak taularatzen dira eta egindako hautuen inguruko diskusio kritikoa aurkezten da.
-\end{abstract}
+
 
 \section{Atazen Espezifikazio Teknikoa}
 
