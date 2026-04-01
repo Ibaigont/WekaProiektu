@@ -238,29 +238,20 @@ Hainbat konfigurazio probatu dira iragazkien pipeline-an (TF-IDF tamainak, StopW
 \caption{Esperimentuen laburpena Test datuetan (Dev CSV)}
 \vspace{0.2cm}
 \resizebox{\textwidth}{!}{
-\begin{tabular}{l c c c c c c c}
+\begin{tabular}{l c c c c c c c c c}
 \toprule
-\textbf{Froga konfigurazioa} & \textbf{Hiztegia} & \textbf{InfoGain (Atrb)} & \textbf{StopWords} & \textbf{Orekatzea} & \textbf{Best C} & \textbf{Accuracy} & \textbf{F-Measure} \\
+\textbf{Froga konfigurazioa} & \textbf{Hiztegia} & \textbf{InfoGain} & \textbf{StopWords} & \textbf{Stemmer} & \textbf{Resample} & \textbf{AttributeSelection} & \textbf{Best C} & \textbf{Accuracy} & \textbf{F-Measure} \\
 \midrule
-1. Froga (Oinarria) & 1000 & 300 atrb. & Ez & Bai (Resample) & 0.1 & \%66.33 & 0.664 \\
-\textbf{2. Froga (Optimoa)} & \textbf{3000} & \textbf{1000 atrb.} & \textbf{Ez} & \textbf{Bai (Resample)} & \textbf{1.0} & \textbf{\%66.73} & \textbf{0.670} \\
-3. Froga (StopWords On) & 1000 & 500 atrb. & Bai & Bai (Resample) & 1.0 & \%60.04 & 0.613 \\
-4. Froga (Curse Dim.) & 5000 & 2000 atrb. & Bai & Bai (Resample) & 0.1 & \%55.98 & 0.560 \\
-5. Froga (Desorekatua) & 1000 & Ez (Guztiak) & Bai & Ez & 1.0 & \%67.34 & 0.637 \\
+1. Froga (Oinarria) & 1000 & 300 & Ez & Bai & Bai & Bai & 0.1 & \%66.33 & 0.664 \\
+2. Froga (Oinarria Dimentsionatuta) & 3000 & 1000 & Ez & Bai & Bai & Bai & 1.0 & \%66.73 & 0.670 \\
+3. Froga (StopWords On) & 1000 & 500 & Bai & Bai & Bai  & Bai & 1.0 & \%60.04 & 0.613 \\
+4. Froga (Curse Dim.) & 5000 & 2000 & Bai & Bai & Bai & Bai & 0.1 & \%55.98 & 0.560 \\
+5. Froga (Desorekatua) & 1000 & Ez & Bai & Bai & Ez & Ez & 1.0 & \%67.34 & 0.637 \\
+\textbf{6. Froga (Optimoa)} & \textbf{3000} & \textbf{1000} & \textbf{Ez} & \textbf{Ez} & \textbf{Bai} & \textbf{Ez} & \textbf{0.1} & \textbf{\%68.56} & \textbf{0.685} \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
-
-\begin{figure}[H]
-    \centering
-    % TODO: Sartu hemen grafikoaren irudia (adib., png edo pdf)
-    % \includegraphics[width=0.8\textwidth]{grafikoak/esperimentuak_konparaketa.png}
-    \vspace{5cm} % Placeholder espazioa irudirik ez badago
-    \caption{Accuracy eta F-Measure metrikak 5 esperimentuetan.}
-    \label{fig:esperimentu_konparaketa}
-\end{figure}
-
 \subsection{Emaitzen Diskusio Kritikoa}
 Datu esperimentalek hainbat ondorio garrantzitsu utzi dizkigute:
 \begin{itemize}
@@ -288,16 +279,6 @@ Hori dela eta, \textbf{2. Froga finkatu da eredu optimo gisa}. 3000 hitzeko hizt
 \textbf{Irrel.} & 7  & 3  & 58  & 98 & (d) \\ \cline{2-5}
 \end{tabular}
 \end{table}
-
-\begin{figure}[H]
-    \centering
-    % TODO: Sartu hemen konfusio-matrizearen bero-mapa (heatmap) irudia
-    % \includegraphics[width=0.6\textwidth]{grafikoak/konfusio_matrizea_heatmap.png}
-    \vspace{6cm} % Placeholder espazioa irudirik ez badago
-    \caption{Dev multzoaren konfusio-matrizearen irudikapen grafikoa (Heatmap).}
-    \label{fig:matrize_heatmap}
-\end{figure}
-
 \textbf{Matrizearen analisia:}
 Ereduak gaitasun bikaina du txio neutroak eta irrelebanteak bereizteko (218tik 196 asmatu ditu neutroetan, eta 166tik 98 irrelebanteetan). Txio \textit{negative} eta \textit{positive}-en kasuan, instantzia asko neutro gisa sailkatzeko joera du oraindik (43 eta 36 errorez), gizakientzat ere askotan testuingururik gabe mezu labur baten sentimendua asmatzea zaila denaren adierazle. Hala ere, aurreko eredu sinpleen aldean hobekuntza nabarmena egon da asmatze tasetan klase minoritario hauetan.
 \newpage
