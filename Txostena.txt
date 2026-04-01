@@ -12,15 +12,19 @@
 \usepackage{float}
 \usepackage{amsmath}
 \usepackage{fancyhdr}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
 
 \pagestyle{fancy}
 \fancyhf{}
 
 \fancyfoot[C]{\thepage}                              % Número de página arriba
+\fancyfoot[L]{Euskal Herriko Unibertsitatea}
+\fancyfoot[R]{EHU}
 \fancyhead[L]{Erabakiak Hartzeko Euskarri Sistemak}  % Pie izquierda
 \fancyhead[R]{Tweet Sentiment -- SMO}             % Pie derecha
 
-% Opcional: grosor de las líneas decorativas
 \renewcommand{\headrulewidth}{0.4pt}  % Línea bajo el header
 \renewcommand{\footrulewidth}{0.4pt}  % Línea sobre el footer
 % --- Izenburua ---
@@ -39,7 +43,7 @@
 \vspace{1cm}
 \newpage
 
-\renewcommand{\contentsname}{Aurkibidea}
+
 \tableofcontents
 \newpage
 
@@ -231,7 +235,7 @@ Datuetan genuen klase-desoreka (Imbalanced data) dela eta, irizpide nagusia ez d
 \newpage
 % -------------------------------------------------------------------
 \section{Emaitza Esperimentalak eta Ereduaren Hautaketa}
-Hainbat konfigurazio probatu dira iragazkien pipeline-an (TF-IDF tamainak, StopWords, Atributu-hautaketa eta Resample). Jarraian, egindako 5 froga nagusiak aztertzen dira (Test / Dev datu ezezagunetan ebaluatuak, errealitateko portaera ikusteko):
+Hainbat konfigurazio probatu dira iragazkien pipeline-an (TF-IDF tamainak, StopWords, Atributu-hautaketa eta Resample). Jarraian, egindako 6 froga nagusiak aztertzen dira (Test / Dev datu ezezagunetan ebaluatuak, errealitateko portaera ikusteko):
 
 \begin{table}[H]
 \centering
@@ -243,7 +247,7 @@ Hainbat konfigurazio probatu dira iragazkien pipeline-an (TF-IDF tamainak, StopW
 \textbf{Froga konfigurazioa} & \textbf{Hiztegia} & \textbf{InfoGain} & \textbf{StopWords} & \textbf{Stemmer} & \textbf{Resample} & \textbf{AttributeSelection} & \textbf{Best C} & \textbf{Accuracy} & \textbf{F-Measure} \\
 \midrule
 1. Froga (Oinarria) & 1000 & 300 & Ez & Bai & Bai & Bai & 0.1 & \%66.33 & 0.664 \\
-2. Froga (Oinarria Dimentsionatuta) & 3000 & 1000 & Ez & Bai & Bai & Bai & 1.0 & \%66.73 & 0.670 \\
+2. Froga (Oinarria Dim.) & 3000 & 1000 & Ez & Bai & Bai & Bai & 1.0 & \%66.73 & 0.670 \\
 3. Froga (StopWords On) & 1000 & 500 & Bai & Bai & Bai  & Bai & 1.0 & \%60.04 & 0.613 \\
 4. Froga (Curse Dim.) & 5000 & 2000 & Bai & Bai & Bai & Bai & 0.1 & \%55.98 & 0.560 \\
 5. Froga (Desorekatua) & 1000 & Ez & Bai & Bai & Ez & Ez & 1.0 & \%67.34 & 0.637 \\
@@ -252,15 +256,94 @@ Hainbat konfigurazio probatu dira iragazkien pipeline-an (TF-IDF tamainak, StopW
 \end{tabular}
 }
 \end{table}
+
+
+
+% ==========================================
+% EJEMPLO 2: Gráfico de barras agrupadas (Accuracy vs F-Measure)
+% ==========================================
+
+% ==========================================
+% 2. ADIBIDEA: Barra elkartuen grafikoa (Accuracy vs F-Measure)
+% ==========================================
+
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            ybar=2pt, % Talde bereko barren arteko tartea
+            width=15cm,
+            height=8cm,
+            enlarge x limits=0.15,
+            ylabel={Ehunekoa (\%)},
+            symbolic x coords={1, 2, 3, 4, 5, 6},
+            xtick=data,
+            xticklabels={Oinarria, Oin. Dim., StopW. On, Curse Dim., Desorekatua, Optimoa},
+            x tick label style={rotate=20, anchor=east},
+            ymin=50, ymax=75,
+            bar width=12pt,
+            legend style={at={(0.5,-0.25)}, anchor=north, legend columns=-1}
+            ]
+            
+            % Accuracy datuak
+            \addplot[fill=cyan!70] coordinates {
+                (1, 66.33) (2, 66.73) (3, 60.04) (4, 55.98) (5, 67.34) (6, 68.56)
+            };
+            
+            % F-Measure datuak (* 100)
+            \addplot[fill=orange!80] coordinates {
+                (1, 66.4) (2, 67.0) (3, 61.3) (4, 56.0) (5, 63.7) (6, 68.5)
+            };
+            
+            \legend{Accuracy (\%), F-Measure ($\times 100$)}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Accuracy eta F-Measure neurrien konparaketa froga bakoitzerako.}
+\end{figure}
+
+\newpage
+
 \subsection{Emaitzen Diskusio Kritikoa}
+
 Datu esperimentalek hainbat ondorio garrantzitsu utzi dizkigute:
+
 \begin{itemize}
-    \item \textbf{Zarataren kudeaketa eta StopWords (3. eta 4. frogak):} Testu akademikoetan ohikoa den arren, Twitterren \textit{StopWords}-ak kentzea kaltegarria dela ikusi da (F-Measure 0.670etik 0.613ra jaitsi da). Arrazoia argia da: mezu laburretan ezezkoak (adib. "not", "no") ezinbestekoak dira sentimendua ezagutzeko, eta StopWords zerrendetan egon ohi dira.
-    \item \textbf{Dimentsionalitatearen Madarikazioa (4. froga):} Atributu gehiegi mantentzeak (2000 atributu) errendimenduaren beherakada zorrotza ekarri du (\%55.98), ereduak zarata ikasi baitu eredu orokorren ordez.
-    \item \textbf{Desorekaren engainua (5. froga):} Datuak orekatu gabe (\textit{Oversampling} gabe) aztertzean \textit{Accuracy} altuena lortu da (\%67.34), baina \textit{F-Measure} okerragoa da (0.637). Eredu hori ez da erabilgarria, txio positiboak eta negatiboak asmatzeko gai ez delako (klase nagusien \% onak puztu egiten du batezbestekoa).
+
+    \item \textbf{Zarataren kudeaketa eta StopWords (3. eta 4. frogak):} 
+    Testu akademikoetan ohikoa den arren, Twitterren StopWords-ak kentzea 
+    kaltegarria dela ikusi da (F-Measure 0.670etik 0.613ra jaitsi da). 
+    Arrazoia argia da: mezu laburretan ezezkoak (adib. ``not'', ``no'') 
+    ezinbestekoak dira sentimendua ezagutzeko, eta StopWords zerrendetan 
+    egon ohi dira.
+
+    \item \textbf{Dimentsionalitatearen Madarikazioa (4. froga):} 
+    Atributu gehiegi mantentze ak (2000 atributu) errendimenduaren 
+    beherakada zorrotza ekarri du (\%55.98), ereduak zarata ikasi baitu 
+    eredu orokorren ordez.
+
+    \item \textbf{Desorekaren engainua (5. froga):} 
+    Datuak orekatu gabe (Oversampling gabe) aztertzean Accuracy altuena 
+    lortu da (\%67.34), baina F-Measure okerragoa da (0.637). Eredu hori 
+    ez da erabilgarria, txio positiboak eta negatiboak asmatzeko gai ez 
+    delako (klase nagusien \% onak puztu egiten du batezbestekoa).
+
+    \item \textbf{Konfigurazio optimoa (6. froga):} 
+    Aurreko frogen ikaskuntzetatik abiatuta, 3000 hitzeko hiztegia 1000 
+    atribututara murriztuta mantendu da, baina bi aldaketa nagusi sartu 
+    dira: Stemmer desaktibatu da (hitz-erro okerrek informazioa galtzea 
+    eragiten zutelako) eta AttributeSelection kendu da (InfoGain bidezko 
+    iragazkia nahikoa zelako dimentsionalitatea kontrolatzeko). Gainera, 
+    Resample bidezko oreka mantendu da. Konfigurazio honek emaitzarik 
+    onenak lortu ditu: Accuracy \%68.56 eta F-Measure 0.685, aurreko 
+    froga guztiak gaindituz.
+
 \end{itemize}
 
-Hori dela eta, \textbf{2. Froga finkatu da eredu optimo gisa}. 3000 hitzeko hiztegia 1000 atribututara murriztuta, hitz arruntak (StopWords) mantenduta eta klaseak Resample bidez orekatuta, SMO-k (C=1.0) F-Neurririk altuena eta fidagarriena lortu du (0.670).
+Hori dela eta, \textbf{6. Froga finkatu da eredu optimo gisa}. 3000 
+hitzeko hiztegia 1000 atribututara murriztuta, hitz arruntak (StopWords) 
+mantenduta, Stemmer gabe eta klaseak Resample bidez orekatuta, SMO-k 
+($C=0.1$) F-Neurririk altuena eta fidagarriena lortu du (0.685).
+
 \newpage
 % -------------------------------------------------------------------
 \section{Eredu Optimoaren Kalitate Estimatua (Blind Test)}
