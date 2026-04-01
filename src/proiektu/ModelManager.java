@@ -110,4 +110,19 @@ public class ModelManager {
         }
         System.out.println("Iragarpenak idatzita: " + outputPath);
     }
+
+    /**
+     * Eredua fitxategi batean gordetzen du.
+     *
+     * @param modelPath Eredua gordeko den fitxategiaren bidea (adibidez: "Emaitzak/eredua.model").
+     * @throws Exception Eredua idaztean erroreren bat gertatzen bada.
+     */
+    public void saveModel(String modelPath) throws Exception {
+        if (bestModel != null) {
+            weka.core.SerializationHelper.write(modelPath, bestModel);
+            System.out.println("Eredua gordeta: " + modelPath + "\n");
+        } else {
+            System.out.println("Ezin da eredua gorde: Eredua ez da entrenatu oraindik.\n");
+        }
+    }
 }

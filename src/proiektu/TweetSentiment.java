@@ -68,6 +68,9 @@ public class TweetSentiment {
             ModelManager modelManager = new ModelManager();
             // Datu gordinak pasatzen dizkiogu, iragazkien paketearekin batera
             modelManager.trainAndEvaluate(baseTrainData, multiFilter);
+            
+            // Eredua emaitzak karpetan gorde
+            modelManager.saveModel("Emaitzak/eredua.model");
 
             // 4. Test datuak kargatu eta egitura berreraiki
             File cleanTest = CSVPreprocessor.preprocessCSV(csvTestPath, false);
