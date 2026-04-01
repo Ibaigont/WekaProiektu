@@ -14,6 +14,8 @@
 \usepackage{fancyhdr}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
 
 
 \pagestyle{fancy}
@@ -150,25 +152,61 @@ Bektorizazioaren ondoren, atributu (hitz) kopurua oso handia da. SMO algoritmoar
 \subsection{Iragarpenen Irteera}
 Azkenik, fluxua amaitzeko, eredua test-multzo itsuari aplikatzen zaio. Emaitzak \texttt{iragarpenak.txt} fitxategian gordetzen dira, non lerro bakoitzak instantzia bakoitzari dagokion iragarpena erakusten duen (\texttt{positive}, \texttt{negative}, \texttt{neutral}, \texttt{irrelevant}).
 
-\begin{figure}[h]
-    \centering
-    \small
-    \begin{tabular}{|c|}
-    \hline
-    \textbf{Input:} Sanders CSV \\ \hline
-    $\downarrow$ \\ \hline
-    \textbf{Preprocessing:} Regex (URLs, @users, RT) \\ \hline
-    $\downarrow$ \\ \hline
-    \textbf{Vectorization:} StringToWordVector (TF-IDF, Stemming) \\ \hline
-    $\downarrow$ \\ \hline
-    \textbf{Selection:} InfoGainAttributeEval (Top 1000) \\ \hline
-    $\downarrow$ \\ \hline
-    \textbf{Classifier:} SMO (C=1.0) \\ \hline
-    $\downarrow$ \\ \hline
-    \textbf{Output:} iragarpenak.txt \\ \hline
-    \end{tabular}
-    \caption{Datuen pipeline-aren eskema sekuentziala.}
-\end{figure}
+\begin{tikzpicture}[
+    font=\sffamily,
+    >=Triangle,
+    node distance=1.5cm and 2cm,
+    % Estiloen definizioa
+    data/.style={trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, align=center, draw=black, fill=blue!15, text width=4.5cm},
+    process/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, align=center, draw=black, fill=orange!15, text width=4cm},
+    decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, align=center, draw=black, fill=green!15, text width=3.5cm},
+    arrow/.style={thick, ->}
+]
+
+% --- Nodoen definizioa ---
+
+% Hasiera
+\node (input) [data] {Sarrera:\\Datu gordinak (Txioak)};
+
+% 1. Pausua: Bektorizazioa
+\node (stwv) [process, below=of input] {1. StringToWordVector\\(Bektorizazioa, TF-IDF)};
+\node (data1) [data, below=of stwv] {Datu bektorizatuak\\(Zenbakizko atributuak)};
+
+% 2. Pausua: Atributuen hautaketa
+\node (dec1) [decision, below=of data1] {useAttrOptimization\\== true?};
+\node (attrsel) [process, right=of dec1, xshift=1.5cm] {2. AttributeSelection\\(InfoGain, Ranker)};
+\node (data2) [data, below=of attrsel] {Datu optimizatuak\\(Atributu murriztuak)};
+
+% 3. Pausua: Datuen orekatzea
+\node (dec2) [decision, below=of dec1, yshift=-2.5cm] {balanceData\\== true?};
+\node (resample) [process, right=of dec2, xshift=1.5cm] {3. Resample\\(Oversampling)};
+\node (data3) [data, below=of resample] {Datu orekatuak\\(Klaseak uniformizatuta)};
+
+% Amaiera
+\node (output) [data, below=of dec2, yshift=-2.5cm] {Amaierako Irteera:\\Datu-multzo prozesatua};
+
+
+% --- Geziak eta Loturak ---
+
+% Lehen zatia (Beti exekutatzen da)
+\draw [arrow] (input) -- (stwv);
+\draw [arrow] (stwv) -- (data1);
+\draw [arrow] (data1) -- (dec1);
+
+% Bigarren zatia (Baldintzatua)
+\draw [arrow] (dec1) -- node[anchor=south] {Bai} (attrsel);
+\draw [arrow] (attrsel) -- (data2);
+\draw [arrow] (data2) |- (dec2);
+\draw [arrow] (dec1) -- node[anchor=east] {Ez} (dec2);
+
+% Hirugarren zatia (Baldintzatua)
+\draw [arrow] (dec2) -- node[anchor=south] {Bai} (resample);
+\draw [arrow] (resample) -- (data3);
+\draw [arrow] (data3) |- (output);
+\draw [arrow] (dec2) -- node[anchor=east] {Ez} (output);
+
+\end{tikzpicture}
+
 \newpage
 % -------------------------------------------------------------------
 \section{Bektorizazioa eta Atributuen Hautapena}
@@ -258,14 +296,6 @@ Hainbat konfigurazio probatu dira iragazkien pipeline-an (TF-IDF tamainak, StopW
 \end{table}
 
 
-
-% ==========================================
-% EJEMPLO 2: Gráfico de barras agrupadas (Accuracy vs F-Measure)
-% ==========================================
-
-% ==========================================
-% 2. ADIBIDEA: Barra elkartuen grafikoa (Accuracy vs F-Measure)
-% ==========================================
 
 \begin{figure}[h]
     \centering
