@@ -6,6 +6,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="/home/ubuntu/Downloads/weka-3-8-6-azul-zulu-linux/weka-3-8-6/weka.jar"/>
+	<classpathentry kind="lib" path="/home/ubuntu/Deskargak/weka-3-8-6/weka.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
