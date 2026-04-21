@@ -152,6 +152,7 @@ Bektorizazioaren ondoren, atributu (hitz) kopurua oso handia da. SMO algoritmoar
 \subsection{Iragarpenen Irteera}
 Azkenik, fluxua amaitzeko, eredua test-multzo itsuari aplikatzen zaio. Emaitzak \texttt{iragarpenak.txt} fitxategian gordetzen dira, non lerro bakoitzak instantzia bakoitzari dagokion iragarpena erakusten duen (\texttt{positive}, \texttt{negative}, \texttt{neutral}, \texttt{irrelevant}).
 
+
 \begin{tikzpicture}[
     font=\sffamily,
     >=Triangle,
@@ -185,7 +186,6 @@ Azkenik, fluxua amaitzeko, eredua test-multzo itsuari aplikatzen zaio. Emaitzak 
 % Amaiera
 \node (output) [data, below=of dec2, yshift=-2.5cm] {Amaierako Irteera:\\Datu-multzo prozesatua};
 
-
 % --- Geziak eta Loturak ---
 
 % Lehen zatia (Beti exekutatzen da)
@@ -196,7 +196,8 @@ Azkenik, fluxua amaitzeko, eredua test-multzo itsuari aplikatzen zaio. Emaitzak 
 % Bigarren zatia (Baldintzatua)
 \draw [arrow] (dec1) -- node[anchor=south] {Bai} (attrsel);
 \draw [arrow] (attrsel) -- (data2);
-\draw [arrow] (data2) |- (dec2);
+% Hemen konponketa: data2 -> dec2 gezia, lehenik horizontala eta gero bertikala
+\draw [arrow] (data2) -| (dec2);
 \draw [arrow] (dec1) -- node[anchor=east] {Ez} (dec2);
 
 % Hirugarren zatia (Baldintzatua)
