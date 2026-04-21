@@ -197,7 +197,7 @@ Azkenik, fluxua amaitzeko, eredua test-multzo itsuari aplikatzen zaio. Emaitzak 
 \draw [arrow] (dec1) -- node[anchor=south] {Bai} (attrsel);
 \draw [arrow] (attrsel) -- (data2);
 % Hemen konponketa: data2 -> dec2 gezia, lehenik horizontala eta gero bertikala
-\draw [arrow] (data2) -| (dec2);
+\draw [arrow] (data2) -- (dec2);
 \draw [arrow] (dec1) -- node[anchor=east] {Ez} (dec2);
 
 % Hirugarren zatia (Baldintzatua)
